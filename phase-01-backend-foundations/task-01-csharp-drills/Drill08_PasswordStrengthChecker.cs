@@ -19,6 +19,7 @@ namespace Task01
             bool hasDigit = false;
             bool hasSpecial = false;
 
+            // Check each character to determine which password rules are satisfied
             if (!string.IsNullOrEmpty(password))
             {
                 foreach (char ch in password)
@@ -42,6 +43,7 @@ namespace Task01
                 }
             }
             List<string> missingRules = new List<string>();
+            // Store every missing requirement so the user knows exactly how to improve the password
             if (password.Length < 8)
             {
                 missingRules.Add("at least 8 characters");

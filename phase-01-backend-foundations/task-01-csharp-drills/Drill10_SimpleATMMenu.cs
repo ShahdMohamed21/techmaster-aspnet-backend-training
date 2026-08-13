@@ -12,6 +12,8 @@ namespace Task01
         {
             Console.WriteLine("==== Drill 10 — Simple ATM Menu ====");
 
+            // Decimal is used for money values to avoid floating-point precision issues
+
             decimal balance = 1000;
             bool isRunning = true;
 
@@ -70,6 +72,7 @@ namespace Task01
                             Console.WriteLine("Invalid Amount");
                             break;
                         }
+                        // Prevent negative withdrawals and withdrawals that exceed the available balance
 
                         if (withdraw <= 0)
                         {

@@ -14,9 +14,11 @@ namespace Task01
                 Console.WriteLine("====Drill 01 — Temperature Converter====");
                 Console.WriteLine("Enter The Temperature : ");
                 double temp;
+                // TryParse prevents the program from crashing when the user enters invalid input
                 bool IsConverted = double.TryParse(Console.ReadLine(), out temp);
                 if (IsConverted)
                 {
+                    // Convert Celsius to Fahrenheit using the formula: (C × 9 / 5) + 32
                     Console.WriteLine($"Fahrenheit : {temp * 9 / 5 + 32:F2} ");
 
                 }

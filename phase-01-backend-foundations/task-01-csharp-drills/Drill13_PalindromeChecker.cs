@@ -20,11 +20,13 @@ namespace Task01
                 Console.WriteLine("Text Cannot Be Empty");
                 return;
             }
+            // Normalize the text so comparison is not affected by spaces or letter casing
 
             text = text.Trim().ToLower();
             text = text.Replace(" ", "");
 
             string reversed = "";
+            // Build the reversed text by reading the original text from the last character to the first
 
             for (int i = text.Length - 1; i >= 0; i--)
             {

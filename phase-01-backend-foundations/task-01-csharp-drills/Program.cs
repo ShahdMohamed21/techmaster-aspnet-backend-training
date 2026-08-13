@@ -1,13 +1,11 @@
 ﻿
-
-
 namespace Task01
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            /*Drill01_Temperature_Converter.Run();
+            Drill01_Temperature_Converter.Run();
             Drill02_Grade_Calculator.Run();
             Drill03_Simple_Login_Validator.Run();
             Drill04_Even_Odd_Analyzer.Run();
@@ -19,8 +17,14 @@ namespace Task01
             Drill10_SimpleATMMenu.Run();
             Drill11_Duplicate_Number_Detector.Run();
             Drill12_EmailValidator.Run();
-            Drill13_PalindromeChecker.Run();*/
+            Drill13_PalindromeChecker.Run();
             Drill14_SimpleExpenseTracker.Run();
+            Drill15_ArrayRotation.Run();
+            Drill16_FrequencyCounter.Run();
+            Drill17_SimpleSearchEngine.Run();
+            Drill18_NumberStatistics.Run();
+            Drill19_TicketPriceCalculator.Run();
+            Drill20.Run();
 
 
 

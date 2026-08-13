@@ -10,11 +10,12 @@ namespace Task01
     {
         public static void Run()
         {
-          HashSet<int> numbers = new HashSet<int>();
+            // HashSet stores only unique numbers, so Add() returns false when a duplicate is found
+            HashSet<int> numbers = new HashSet<int>();
             Console.Write("Enter Number Of Numbers: ");
             int count;
             bool isconvert=int.TryParse(Console.ReadLine(), out count);
-            if(!isconvert)
+            if(!isconvert || count <= 0)
             {
                 Console.WriteLine("Invaild Input");
             }
@@ -24,7 +25,7 @@ namespace Task01
                 Console.WriteLine($"Enter Number {i + 1}");
                 int num;
                 bool isconverted = int.TryParse(Console.ReadLine(), out num);
-                if (!isconverted)
+                if (!isconverted )
                 {
                     Console.WriteLine("Invaild Number");
                     i--;
@@ -32,6 +33,8 @@ namespace Task01
                 }
                 if(!numbers.Add(num))
                 {
+                    // Store duplicates in a separate HashSet to avoid printing the same duplicate more than once
+
                     Repeated.Add(num);
                 }
 
