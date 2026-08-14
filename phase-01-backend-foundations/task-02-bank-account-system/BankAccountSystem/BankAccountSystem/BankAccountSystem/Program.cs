@@ -7,7 +7,7 @@ namespace BankAccountSystem
     {
         static void Main(string[] args)
         {
-            ConsoleMenu consoleMenu = new ConsoleMenu();
+            ConsoleMenu consoleMenu = new ConsoleMenu(); 
             consoleMenu.Run();
         } 
     }

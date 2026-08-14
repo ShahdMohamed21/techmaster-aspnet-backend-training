@@ -10,5 +10,5 @@ namespace Task02.BankAccountSystem.Models
     {
         Savings,
         Current
-    }
+    } 
 }
