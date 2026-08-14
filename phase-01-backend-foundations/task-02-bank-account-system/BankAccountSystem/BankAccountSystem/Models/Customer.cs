@@ -11,15 +11,23 @@ namespace Task02.BankAccountSystem.Models
     {
         public int CustomerId { get; set; }
 
-        [Required]
-        public string FullName { get; set; }
 
         [Required]
-        public string Email { get; set; }
+        public string FullName { get; set; } = string.Empty;
+
 
         [Required]
-        public string PhoneNumber { get; set; }
+        public string Email { get; set; } = string.Empty;
+
+
+        [Required]
+        public string PhoneNumber { get; set; } = string.Empty;
+
 
         public DateTime CreatedAt { get; set; }
+
+        public Customer()
+        {
+        }
     }
 }
