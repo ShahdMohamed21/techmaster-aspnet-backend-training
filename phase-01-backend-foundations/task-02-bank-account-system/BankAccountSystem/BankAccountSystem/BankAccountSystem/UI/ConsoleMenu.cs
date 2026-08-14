@@ -9,7 +9,7 @@ using Task02.BankAccountSystem.Services;
 namespace Task02.BankAccountSystem.UI
 {
     public class ConsoleMenu
-    {
+    {  
         public void Run()
         {
             BankService service = new BankService();

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Task02.BankAccountSystem.Models
 {
-    public class Transaction
+    public class Transaction 
     {
         public int TransactionId { get; set; }
 

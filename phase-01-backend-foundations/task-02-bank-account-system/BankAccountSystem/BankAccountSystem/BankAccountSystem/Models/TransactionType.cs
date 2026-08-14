@@ -4,7 +4,7 @@
     {
         Deposit,
         Withdraw,
-        TransferOut,
+        TransferOut, 
         TransferIn
     }
 }

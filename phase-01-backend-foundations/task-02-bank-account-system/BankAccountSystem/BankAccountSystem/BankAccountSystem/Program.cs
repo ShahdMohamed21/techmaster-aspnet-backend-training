@@ -9,6 +9,6 @@ namespace BankAccountSystem
         {
             ConsoleMenu consoleMenu = new ConsoleMenu();
             consoleMenu.Run();
-        }
+        } 
     }
 }

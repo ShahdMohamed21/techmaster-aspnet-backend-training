@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Task02.BankAccountSystem.Models
+namespace Task02.BankAccountSystem.Models 
 {
     public class Customer
     {

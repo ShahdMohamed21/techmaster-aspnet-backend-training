@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Task02.BankAccountSystem.Models
 {
-    public enum AccountType
+    public enum AccountType 
     {
         Savings,
         Current

@@ -4,7 +4,7 @@ using Task02.BankAccountSystem.Models;
 
 namespace Task02.BankAccountSystem.Models
 {
-    public class BankAccount
+    public class BankAccount 
     {
         public string AccountNumber { get; private set; }
         public Customer Customer { get; private set; }
