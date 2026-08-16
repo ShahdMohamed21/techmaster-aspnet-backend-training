@@ -12,33 +12,36 @@ The goal of the refactoring was to improve the code structure, readability, vali
 
 The application follows these rules:
 
-- Product price must be positive.
-- Quantity must be positive.
-- Customer name cannot be empty.
-- Product name cannot be empty.
-- Regular customers get 0% discount.
-- Silver customers get 5% discount.
-- Gold customers get 10% discount.
-- VIP customers get 15% discount.
-- Tax is 14%.
-- Shipping costs 50 when the amount after discount is below 1000.
-- Shipping is free when the amount after discount is 1000 or more.
-- Discount is applied before tax.
-- Tax is applied before shipping.
+* Product price must be positive.
+* Quantity must be positive.
+* Customer name cannot be empty.
+* Product name cannot be empty.
+* Regular customers get 0% discount.
+* Silver customers get 5% discount.
+* Gold customers get 10% discount.
+* VIP customers get 15% discount.
+* Tax is 14%.
+* Shipping costs 50 when the amount after discount is below 1000.
+* Shipping is free when the amount after discount is 1000 or more.
+* Discount is applied before tax.
+* Tax is applied before shipping.
 
 ## Project Structure
 
 ### Models
 
-- `Customer.cs` - Stores customer information and customer type.
-- `CustomerType.cs` - Defines the available customer types.
-- `Order.cs` - Stores product, price, and quantity information.
+* `Customer.cs` - Stores customer information and customer type.
+* `CustomerType.cs` - Defines the available customer types.
+* `Order.cs` - Stores product, price, and quantity information.
 
 ### Services
 
-- `ConsoleMenu.cs` - Handles user input and input validation.
-- `OrderCalculator.cs` - Contains the order calculation and business rules.
-- `ReceiptPrinter.cs` - Displays the final receipt.
+* `OrderCalculator.cs` - Contains the order calculation and business rules.
+* `ReceiptPrinter.cs` - Displays the final receipt.
+
+### UI
+
+* `ConsoleMenu.cs` - Handles user input and input validation.
 
 ### Program.cs
 
@@ -71,14 +74,14 @@ The following improvements were made:
 
 The original `Program.cs` was responsible for:
 
-- Reading user input.
-- Parsing values.
-- Calculating subtotal.
-- Calculating discounts.
-- Calculating tax.
-- Calculating shipping.
-- Calculating the final total.
-- Printing the receipt.
+* Reading user input.
+* Parsing values.
+* Calculating subtotal.
+* Calculating discounts.
+* Calculating tax.
+* Calculating shipping.
+* Calculating the final total.
+* Printing the receipt.
 
 This made the code difficult to maintain and extend.
 
@@ -90,14 +93,37 @@ The responsibilities are now separated:
 Program
    |
    v
-ConsoleMenu
+ConsoleMenu (UI)
    |
    +---- Customer
    |
    +---- Order
           |
           v
-   OrderCalculator
+   OrderCalculator (Services)
           |
           v
-   ReceiptPrinter
+   ReceiptPrinter (Services)
+```
+
+Each class now has a clear responsibility, making the application easier to understand, maintain, and extend.
+
+## Example
+
+For a Gold customer buying a product for 10000:
+
+```text
+Subtotal: 10000.00
+Discount: 1000.00
+Tax: 1260.00
+Shipping: 0.00
+Final Total: 10260.00
+```
+
+The final result remains consistent with the original business rules.
+
+## Conclusion
+
+The refactoring improved the structure and maintainability of the application while preserving its original functionality.
+
+The business rules were not changed; only the code organization, validation, readability, and separation of responsibilities were improved.
