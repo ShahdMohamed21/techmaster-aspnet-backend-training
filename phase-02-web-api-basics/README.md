@@ -6,3 +6,5 @@
 2. Run the API project.
 3. Open Swagger URL.
 4. Import Postman collection if needed.
+5. Postman collection: []
+6.  Demo video: [ https://drive.google.com/drive/folders/1t-A7G6Wj1UcnZExvbvIt_UNvf2Uar4v_?usp=sharing ]
