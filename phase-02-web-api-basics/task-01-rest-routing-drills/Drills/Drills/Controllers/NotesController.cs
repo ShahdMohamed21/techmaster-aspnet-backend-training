@@ -1,5 +1,6 @@
 ﻿using Drills.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace Drills.Controllers
 {
@@ -27,11 +28,12 @@ namespace Drills.Controllers
         }
 
         //Drill 07 - Get Notes List
-        [HttpGet]
+       [HttpGet]
         public IActionResult GetNotes()
         {
-            return Ok(Notes);
+            return Ok(Notes);     // كنت عملالها كومنت عشان فيه 2 get
         }
+      
         //Drill 08 - Get Note By Id
         [HttpGet("{Id}")]
         public IActionResult GetNoteById(int Id)
@@ -90,6 +92,50 @@ namespace Drills.Controllers
 
             return NoContent();
 
+        }
+        //Drill 11 - Search Notes
+        [HttpGet("search")]
+        public IActionResult Search([FromQuery] string Keyword){
+            if (string.IsNullOrWhiteSpace(Keyword))
+            {
+                return BadRequest(new
+                {
+                    message = "Keyword is required"
+                });
+            }
+            var Result=Notes.Where(x=> (x.Title.Contains(Keyword,StringComparison.OrdinalIgnoreCase)||x.Content.Contains(Keyword,StringComparison.OrdinalIgnoreCase))).ToList();
+            return Ok(Result);
+        }
+        //Drill 12 - Pagination Demo
+        [HttpGet]
+        public IActionResult GetNotes( [FromQuery] int pageNumber,[FromQuery] int pageSize)
+        {
+            if (pageNumber <= 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Page number must be greater than 0"
+                });
+            }
+            if (pageSize < 1 || pageSize > 50)
+            {
+                return BadRequest(new
+                {
+                    message = "Page size must be between 1 and 50"
+                });
+            }
+            var totalCount = Notes.Count;
+            var skip = (pageNumber - 1) * pageSize;
+
+            var items = Notes.Skip(skip).Take(pageSize).ToList();
+
+            return Ok(new
+            {
+                items = items,
+                pageNumber = pageNumber,
+                pageSize = pageSize,
+                totalCount = totalCount
+            });
         }
 
     }
