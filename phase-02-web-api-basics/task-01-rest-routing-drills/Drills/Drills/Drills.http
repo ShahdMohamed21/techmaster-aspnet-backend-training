@@ -1,0 +1,6 @@
+@Drills_HostAddress = http://localhost:5139
+
+GET {{Drills_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
