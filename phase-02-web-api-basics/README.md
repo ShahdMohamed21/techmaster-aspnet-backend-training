@@ -1,6 +1,13 @@
 # Phase 02 - ASP.NET Core Web API Basics
-## Student Information- Name: [Shahd Mohamed]- Track: ASP.NET Backend Career Training- Phase: Phase 02 - Web API Basics
-## What This Phase Contains- REST and routing drills- Student Management API- Products & Categories API- Book Store API- Postman and Swagger evidence- API standards refactor task
+## Student Information- Name: [Shahd Mohamed]- 
+Track: ASP.NET Backend Career Training- Phase: Phase 02 - Web API Basics
+## What This Phase Contains
+-REST and routing drills
+-Student Management API
+-Products & Categories API
+-Book Store API
+-Postman and Swagger evidence
+-API standards refactor task
 ## How To Run
 1. Open the solution.
 2. Run the API project.
