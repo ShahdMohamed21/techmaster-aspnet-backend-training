@@ -71,5 +71,40 @@ namespace StudentManagementApi.Services
             }
             
         }
+
+        public List<StudentResponse> GetAllStudents(string? search,string? trackName, bool? isActive, int pageNumber, int pageSize)
+        {
+            var query = students.AsQueryable(); // كدا معايا كل الطلاب
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(x =>x.FullName.Contains(search) || x.Email.Contains(search));
+            }
+            if (!string.IsNullOrWhiteSpace(trackName))
+            {
+                query = query.Where(x => x.TrackName == trackName);
+            }
+            if (isActive.HasValue)
+            {
+                query = query.Where(x =>x.IsActive == isActive.Value);
+            }
+            var studentslist = query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new StudentResponse()
+                {
+                    StudentId = x.StudentId,
+                    Email = x.Email,
+                    FullName = x.FullName,
+                    TrackName = x.TrackName,
+                    PhoneNumber = x.PhoneNumber,
+                    EnrollmentDate = x.EnrollmentDate,
+                    GitHubProfileUrl = x.GitHubProfileUrl,
+                    LinkedInProfileUrl = x.LinkedInProfileUrl,
+                    IsActive = x.IsActive
+                })
+                .ToList();
+
+            return studentslist;
+        }
     }
 }

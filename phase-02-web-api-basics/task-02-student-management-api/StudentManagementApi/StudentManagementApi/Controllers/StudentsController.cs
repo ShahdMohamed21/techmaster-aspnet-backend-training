@@ -21,6 +21,12 @@ namespace StudentManagementApi.Controllers
             return Created("", student);
 
         }
+        [HttpGet]
+        public IActionResult GetAllStudents(string? search, string? trackName, bool? isActive, int pageNumber, int pageSize)
+        {
+            var students=studentService.GetAllStudents(search, trackName, isActive, pageNumber, pageSize);
+            return Ok(students);
+        }
 
        
     }
