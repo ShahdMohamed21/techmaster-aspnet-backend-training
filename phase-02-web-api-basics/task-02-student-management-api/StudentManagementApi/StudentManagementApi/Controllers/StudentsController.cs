@@ -28,6 +28,51 @@ namespace StudentManagementApi.Controllers
             return Ok(students);
         }
 
-       
+        [HttpGet("{id}")]
+        public IActionResult GetStudentById(int id)
+        {
+            var student= studentService.GetStudentById(id);
+            if (student == null)
+            {
+                return NotFound("Student Not Found");
+            }
+            return Ok(student);
+        }
+        [HttpPut("{id}")]
+        public IActionResult UpdateStudent(int id,[FromBody] UpdateStudentRequest request)
+        {
+            var student = studentService.UpdateStudent(id,request);
+            if (student == null)
+            {
+                return NotFound("Student Not Found");
+            }
+            return Ok(student);
+        }
+        [HttpPatch("{id}/status")]
+        public IActionResult UpdateStudentStatus( int id, [FromBody] UpdateStudentStatusRequest request)
+        {
+            var student = studentService.UpdateStudentStatus(id, request);
+
+            if (student == null)
+            {
+                return NotFound("Student Not Found");
+            }
+
+            return Ok(new
+            {
+                message = request.IsActive? "Student activated successfully": "Student deactivated successfully",
+                student
+            });
+        }
+        [HttpGet("stats")]
+        public IActionResult GetStudentStats()
+        {
+            var stats = studentService.GetStudentStats();
+
+            return Ok(stats);
+        }
+
+
+
     }
 }

@@ -106,5 +106,107 @@ namespace StudentManagementApi.Services
 
             return studentslist;
         }
+
+        public StudentResponse? GetStudentById(int id)
+        {
+            var stu = students.FirstOrDefault(x=> x.StudentId == id);
+            if(stu == null)
+            {
+                return null;
+            }
+            StudentResponse student = new StudentResponse
+            {
+                StudentId = stu.StudentId,
+                Email = stu.Email,
+                FullName = stu.FullName,
+                TrackName = stu.TrackName,
+                PhoneNumber = stu.PhoneNumber,
+                EnrollmentDate = stu.EnrollmentDate,
+                GitHubProfileUrl = stu.GitHubProfileUrl,
+                LinkedInProfileUrl = stu.LinkedInProfileUrl,
+                IsActive = stu.IsActive
+            };
+            return student;
+        }
+
+        public StudentResponse? UpdateStudent(int id,UpdateStudentRequest request)
+        {
+            var stu = students.FirstOrDefault(x => x.StudentId == id);
+            if(stu == null)
+            {
+                return null;
+            }
+
+            stu.Email=request.Email;
+            stu.FullName=request.FullName;
+            stu.TrackName=request.TrackName;
+            stu.PhoneNumber=request.PhoneNumber;
+            stu.EnrollmentDate=request.EnrollmentDate;
+            stu.GitHubProfileUrl=request.GitHubProfileUrl;
+            stu.LinkedInProfileUrl=request.LinkedInProfileUrl;
+            stu.IsActive = request.IsActive;
+
+            StudentResponse student = new StudentResponse
+            {
+                StudentId = stu.StudentId,
+                Email = stu.Email,
+                FullName = stu.FullName,
+                TrackName = stu.TrackName,
+                PhoneNumber = stu.PhoneNumber,
+                EnrollmentDate = stu.EnrollmentDate,
+                GitHubProfileUrl = stu.GitHubProfileUrl,
+                LinkedInProfileUrl = stu.LinkedInProfileUrl,
+                IsActive = stu.IsActive
+            };
+            return student;
+
+        }
+        public StudentResponse? UpdateStudentStatus(int id,UpdateStudentStatusRequest request)
+        {
+            var stu = students.FirstOrDefault(x => x.StudentId == id);
+
+            if (stu == null)
+            {
+                return null;
+            }
+
+            stu.IsActive = request.IsActive;
+
+            StudentResponse student = new StudentResponse
+            {
+                StudentId = stu.StudentId,
+                Email = stu.Email,
+                FullName = stu.FullName,
+                TrackName = stu.TrackName,
+                PhoneNumber = stu.PhoneNumber,
+                EnrollmentDate = stu.EnrollmentDate,
+                GitHubProfileUrl = stu.GitHubProfileUrl,
+                LinkedInProfileUrl = stu.LinkedInProfileUrl,
+                IsActive = stu.IsActive
+            };
+
+            return student;
+        }
+        public StudentStatsResponse GetStudentStats()
+        {
+            var stats = new StudentStatsResponse
+            {
+                TotalStudents = students.Count,
+
+                ActiveStudents = students.Count(x => x.IsActive),
+
+                InactiveStudents = students.Count(x => !x.IsActive),
+
+                StudentsByTrack = students.GroupBy(x => x.TrackName).ToDictionary( x => x.Key, x => x.Count()
+                )
+            };
+
+            return stats;
+        }
+
+
+
+
     }
-}
+    }
+
