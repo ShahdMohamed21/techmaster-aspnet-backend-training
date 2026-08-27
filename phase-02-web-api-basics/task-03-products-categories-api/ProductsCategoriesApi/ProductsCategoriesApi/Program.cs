@@ -1,7 +1,5 @@
-
-using StudentManagementApi.Services;    
-
-namespace StudentManagementApi
+using ProductsCategoriesApi.Services;
+namespace ProductsCategoriesApi
 {
     public class Program
     {
@@ -15,7 +13,8 @@ namespace StudentManagementApi
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddSingleton<IStudentService, StudentService>();
+            builder.Services.AddSingleton<ICategoryService, CategoryService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
