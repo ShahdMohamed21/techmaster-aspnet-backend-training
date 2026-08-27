@@ -57,5 +57,15 @@ namespace ProductsCategoriesApi.Controllers
             }
             return Ok("Product Deleted");
         }
+        [HttpGet("search")]
+        public IActionResult Search(string? name, int? categoryId, decimal? minPrice, decimal? maxPrice, bool? isAvailable, bool? lowStock) { 
+            var products= _productService.SearchProducts(name, categoryId, minPrice, maxPrice, isAvailable, lowStock);
+            return Ok(products);
+        }
+        [HttpGet("Reports")]
+        public IActionResult GetReport() {
+            var report = _productService.GetReports();
+            return Ok (report);
+        }
     }
 }

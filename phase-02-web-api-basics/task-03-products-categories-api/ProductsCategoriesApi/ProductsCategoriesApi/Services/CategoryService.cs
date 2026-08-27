@@ -6,8 +6,46 @@ namespace ProductsCategoriesApi.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly List<Category> _categories=new List<Category>();
-        int NextId = 1;
+        private readonly List<Category> _categories = new List<Category>
+        {
+
+    new Category
+    {
+        Categoryd = 1,
+        Name = "Electronics",
+        Description = "Electronic devices and accessories",
+        IsActive = true,
+        CreatedAt = DateTime.Now
+    },
+
+    new Category
+    {
+        Categoryd = 2,
+        Name = "Furniture",
+        Description = "Office and home furniture",
+        IsActive = true,
+        CreatedAt = DateTime.Now
+    },
+
+    new Category
+    {
+        Categoryd = 3,
+        Name = "Stationery",
+        Description = "Office and school stationery",
+        IsActive = true,
+        CreatedAt = DateTime.Now
+    },
+
+    new Category
+    {
+        Categoryd = 4,
+        Name = "Accessories",
+        Description = "Computer and laptop accessories",
+        IsActive = true,
+        CreatedAt = DateTime.Now
+    }
+        };
+        int NextId = 5;
         public List<CategoryResponse> GetAllCategories()
         {
             var categories = _categories.Where(x => x.IsActive).Select(x => new CategoryResponse()

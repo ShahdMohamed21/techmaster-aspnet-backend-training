@@ -9,5 +9,7 @@ namespace ProductsCategoriesApi.Services
         public ProductResponse? GetProductById(int id);
         public ProductResponse? UpdateProduct(int id, UpdateProductRequest request);
         public bool DeleteProduct(int id);
-    }
+        public List<ProductResponse> SearchProducts(string? name, int? categoryId, decimal? minPrice, decimal? maxPrice, bool? isAvailable, bool? lowStock);
+        public Reports GetReports();
+    };
 }
