@@ -7,7 +7,7 @@ namespace ProductsCategoriesApi.Models
      public int ProductId { get; set; }
     [Required]
     public string Name { get; set; }
-    public Category CategoryId { get; set; }
+    public int CategoryId { get; set; }
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
     public bool IsAvailable { get; set; }

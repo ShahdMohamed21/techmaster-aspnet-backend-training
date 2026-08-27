@@ -14,6 +14,8 @@ namespace ProductsCategoriesApi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<ICategoryService, CategoryService>();
+            builder.Services.AddSingleton<IProductService, ProductService>();
+
 
             var app = builder.Build();
 
