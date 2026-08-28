@@ -10,7 +10,7 @@ namespace BookStoreApi.Models
         public string Title { get; set; }
         [Required]
         public string ISBN { get; set; }
-        public string PublishedYear { get; set; }
+        public int PublishedYear { get; set; }
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public int AuthorId { get; set;}
