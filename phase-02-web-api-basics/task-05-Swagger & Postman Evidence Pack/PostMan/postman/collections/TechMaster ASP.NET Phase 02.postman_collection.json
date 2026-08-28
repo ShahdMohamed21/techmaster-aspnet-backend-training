@@ -1,0 +1,570 @@
+{
+  "info": {
+    "_postman_id": "b2a37a6f-b5bd-4d89-83fc-50b92a26bfcf",
+    "name": "TechMaster ASP.NET Phase 02",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "TechMaster ASP.NET Phase 02",
+      "item": [
+        {
+          "name": "Student Management API",
+          "item": [
+            {
+              "name": "Create Student",
+              "id": "6d8339d5-074a-4c25-aea0-cbc292964f17",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"Mona Islam\",\r\n  \"email\": \"mona@example.com\",\r\n  \"trackName\": \"Network\",\r\n  \"phoneNumber\": \"01098987626\",\r\n  \"enrollmentDate\": \"2026-08-28T19:52:55.265Z\",\r\n  \"isActive\": true,\r\n  \"gitHubProfileUrl\": \"\",\r\n  \"linkedInProfileUrl\": \"\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7237/api/Students",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Students",
+              "id": "4eae9577-e042-44bf-9700-0f7d391f0663",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7237/api/Students?pageNumber=1&pageSize=20",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students"
+                  ],
+                  "query": [
+                    {
+                      "key": "pageNumber",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "20"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Student By Id",
+              "id": "9f54af0f-fbe5-4046-bea7-601f6cf8c2b3",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7237/api/Students/1",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Student",
+              "id": "5b3347ae-4da7-46ac-b328-f0ef0abade20",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"Ali Ahmed\",\r\n  \"email\": \"alii@example.com\",\r\n  \"trackName\": \".NET\",\r\n  \"phoneNumber\": \"01098872625\",\r\n  \"enrollmentDate\": \"2026-08-28T19:58:03.972Z\",\r\n  \"isActive\": true,\r\n  \"gitHubProfileUrl\": \"string\",\r\n  \"linkedInProfileUrl\": \"string\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7237/api/Students/2",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students",
+                    "2"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Student Status",
+              "id": "72e19ff0-c5e7-48f5-ae38-1858ff5dac27",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"isActive\": false\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7237/api/Students/1/status",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students",
+                    "1",
+                    "status"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Student Stats",
+              "id": "8a8eb736-b6fa-4235-9e51-e3a77bc81d66",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7237/api/Students/stats",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7237",
+                  "path": [
+                    "api",
+                    "Students",
+                    "stats"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "46e98986-513b-4f71-ac47-7150b429c901"
+        },
+        {
+          "name": "Products & Categories API",
+          "item": [
+            {
+              "name": "Create Category",
+              "id": "b4950c6d-c825-46cc-93d7-1db6145a488b",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Sweets\",\r\n  \"description\": \"Sugar And Candy\",\r\n  \"isActive\": true,\r\n  \"createdAt\": \"2026-08-28T20:03:42.361Z\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7194/api/Categories",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7194",
+                  "path": [
+                    "api",
+                    "Categories"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Product",
+              "id": "5de4bca7-14e0-4906-8213-7c67b428597c",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Cake\",\r\n  \"categoryId\": 5,\r\n  \"price\": 14,\r\n  \"stockQuantity\": 10,\r\n  \"isAvailable\": true,\r\n  \"supplierName\": \"TODO\",\r\n  \"createdAt\": \"2026-08-28T20:05:29.326Z\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7194/api/Products",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7194",
+                  "path": [
+                    "api",
+                    "Products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Search Products",
+              "id": "5b66bd05-9c00-4ec4-9984-78b8beb87029",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7194/api/Products/search?minPrice=100&isAvailable=true&lowStock=false",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7194",
+                  "path": [
+                    "api",
+                    "Products",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "minPrice",
+                      "value": "100"
+                    },
+                    {
+                      "key": "isAvailable",
+                      "value": "true"
+                    },
+                    {
+                      "key": "lowStock",
+                      "value": "false"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Low Stock Products",
+              "id": "bbd75e85-ea00-4c29-8bba-4c96c2d80367",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7194/api/Products/search?lowStock=true",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7194",
+                  "path": [
+                    "api",
+                    "Products",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "lowStock",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Stock Value Report",
+              "id": "8768171d-28a2-4adf-9e0f-da8d20286368",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7194/api/Products/Reports",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7194",
+                  "path": [
+                    "api",
+                    "Products",
+                    "Reports"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "42b415c6-86a9-4f4b-bd93-bde72ecd4462"
+        },
+        {
+          "name": "Book Store API",
+          "item": [
+            {
+              "name": "Create Author",
+              "id": "294402c3-c47c-4593-aea1-506afbfac9d1",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"Mariam Ahmed\",\r\n  \"country\": \"Sudan\",\r\n  \"birthDate\": \"1999-09-09\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7022/api/Authors",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Authors"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Category",
+              "id": "ca2f3297-b4f4-461e-8e8a-4819c787d7cf",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"name\": \"Animation\",\r\n  \"description\": \"Cartoon\",\r\n  \"isActive\": true\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7022/api/Categories",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Categories"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Book",
+              "id": "e271b44a-03c1-4a4d-9bbd-fed7a733f530",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"title\": \"Attack On Tatain\",\r\n  \"isbn\": \"122-ABABSABA\",\r\n  \"publishedYear\": 2018,\r\n  \"price\": 100,\r\n  \"stockQuantity\": 2,\r\n  \"authorId\": 1,\r\n  \"categoryId\": 1\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7022/api/Books",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Books"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Search Books",
+              "id": "a1220ebd-b611-4966-92d4-9b4dffc2da1e",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7022/api/Books?CategoryId=1&PageNumber=1&PageSize=1",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Books"
+                  ],
+                  "query": [
+                    {
+                      "key": "CategoryId",
+                      "value": "1"
+                    },
+                    {
+                      "key": "PageNumber",
+                      "value": "1"
+                    },
+                    {
+                      "key": "PageSize",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Book Reports",
+              "id": "2cd74ff9-a242-4915-985e-ee4d66d675ba",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "https://localhost:7022/api/Books/reports/summary",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Books",
+                    "reports",
+                    "summary"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "e939cdb0-614d-4aec-9f77-20af30522f89"
+        },
+        {
+          "name": "Error Cases",
+          "item": [
+            {
+              "name": "Validation Error",
+              "id": "5b344f30-d2a1-46fd-b05e-8a9ff292d225",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"fullName\": \"\",\r\n  \"country\": \"Egypt\",\r\n  \"birthDate\": \"1999-09-09\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7022/api/Authors",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Authors"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Missing Resource 404",
+              "id": "385ec51d-66a3-4123-9cd6-997650b6a1cb",
+              "request": {
+                "method": "GET",
+                "header": []
+              },
+              "response": []
+            },
+            {
+              "name": "nvalid Request 400",
+              "id": "8e4e4cdb-6357-4179-b8bd-2f5fd05d0757",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"title\": \"Test Book\",\r\n  \"isbn\": \"123456789\",\r\n  \"publishedYear\": 2025,\r\n  \"price\": -100,\r\n  \"stockQuantity\": 10,\r\n  \"authorId\": 1,\r\n  \"categoryId\": 1\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://localhost:7022/api/Books",
+                  "protocol": "https",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "7022",
+                  "path": [
+                    "api",
+                    "Books"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "01b02f97-d5b1-4c4c-b75e-c7ca61d26453"
+        }
+      ],
+      "id": "8f2e45d2-92d7-4944-8d36-435ea6681a80"
+    }
+  ]
+}
