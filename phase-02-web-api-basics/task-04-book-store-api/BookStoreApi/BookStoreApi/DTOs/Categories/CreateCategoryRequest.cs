@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BookStoreApi.Models
+namespace BookStoreApi.DTOs.Categories
 {
-    public class Category
+    public class CreateCategoryRequest
     {
-        public int CategoryId { get; set; }
-
         [Required]
         public string Name { get; set; } = string.Empty;
 

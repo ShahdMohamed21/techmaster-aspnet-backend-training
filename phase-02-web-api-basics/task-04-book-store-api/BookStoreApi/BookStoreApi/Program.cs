@@ -19,6 +19,7 @@ namespace BookStoreApi
             {
             }, typeof(MappingProfile));
             builder.Services.AddSingleton<IAuthorService, AuthorService>();
+            builder.Services.AddSingleton<ICategoryService, CategoryService>();
 
             var app = builder.Build();
 
