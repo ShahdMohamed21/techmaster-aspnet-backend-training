@@ -200,8 +200,66 @@ namespace BookStoreApi.Services
             book.IsAvailable = book.StockQuantity > 0;
             var bookresponse=_mapper.Map<BookResponse>(book);
             return bookresponse;
+        }
+        public List<BookResponse> SerachBooks(BookSearchRequest request)
+        {
+            var query = books.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                query = query.Where(x =>
+                    x.Title.Contains(request.Search, StringComparison.OrdinalIgnoreCase) ||
+                    x.ISBN.Contains(request.Search, StringComparison.OrdinalIgnoreCase));
+            }
+            if (request.CategoryId.HasValue)
+            {
+                query = query.Where(x => x.CategoryId == request.CategoryId.Value);
+            }
+            if (request.AuthorId.HasValue)
+            {
+                query = query.Where(x => x.AuthorId == request.AuthorId.Value);
+            }
+            if (request.IsAvailable.HasValue)
+            {
+                query = query.Where(x => x.IsAvailable == request.IsAvailable.Value);
+            }
+
+            if (request.PageNumber < 1)
+            {
+                request.PageNumber = 1;
+            }
+
+            if (request.PageSize < 1)
+            {
+                request.PageSize = 10;
+            }
+
+            var result = query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToList();
+            var SearchedBooks= _mapper.Map<List<BookResponse>>(result);
+
+            return SearchedBooks;
+        }
+        public BookSummaryResponse GetSummary()
+        {
+            var summary = new BookSummaryResponse
+            {
+                TotalBooks = books.Count,
+
+                AvailableBooks = books.Count(x => x.IsAvailable),
+
+                OutOfStockBooks = books.Count(x => x.StockQuantity == 0),
+
+                BooksPerCategory = books.GroupBy(x => x.CategoryId).ToDictionary(x => x.Key, x => x.Count()),
+                BooksPerAuthor = books.GroupBy(x => x.AuthorId).ToDictionary(x => x.Key, x => x.Count()),
+                TotalInventoryValue = books.Sum(x => x.Price * x.StockQuantity)
+            };
 
 
+             
+            return summary;
         }
     }
 }

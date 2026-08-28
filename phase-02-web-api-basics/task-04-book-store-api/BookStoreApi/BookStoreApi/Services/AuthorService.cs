@@ -35,11 +35,16 @@ namespace BookStoreApi.Services
                 CreatedAt=DateTime.Now,
             }
         };  // seed data
+        private readonly HashSet<int> authorsWithBooks = new()
+        {
+          1, 2, 3
+        };
         private int NextId = 4;
 
         public AuthorService(IMapper mapper)
         {
             _mapper = mapper;
+
         }
         public AuthorResponse CreateAuthor(CreateAuthorRequest request)
         {
@@ -87,10 +92,25 @@ namespace BookStoreApi.Services
 
             return _mapper.Map<AuthorResponse>(author);
         }
-
-        AuthorResponse? IAuthorService.DeleteAuthor(int id)
+        public bool DeleteAuthor(int id)
         {
-            throw new NotImplementedException();
+            var author = authors.FirstOrDefault(x => x.AuthorId == id);
+
+            if (author == null)
+            {
+                return false;
+            }
+
+            if (authorsWithBooks.Contains(id))
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete author because the author has books");
+            }
+
+            authors.Remove(author);
+            return true;
         }
+
+
     }
 }

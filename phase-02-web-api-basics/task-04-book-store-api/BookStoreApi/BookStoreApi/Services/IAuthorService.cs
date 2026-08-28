@@ -7,7 +7,7 @@ namespace BookStoreApi.Services
         public AuthorResponse CreateAuthor(CreateAuthorRequest request);
         public List<AuthorResponse> GetAllAuthors();
         public AuthorResponse? UpdateAuthor(int id,UpdateAuthorRequest request);
-        public AuthorResponse? DeleteAuthor(int id);
+        public bool DeleteAuthor(int id);
         public AuthorResponse? GetAuthorById(int id);
     }
 }

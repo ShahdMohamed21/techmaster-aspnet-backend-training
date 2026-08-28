@@ -28,12 +28,13 @@ namespace BookStoreApi.Controllers
             }
         }
 
-        [HttpGet]
+       /* [HttpGet]
         public IActionResult GetAllBooks()
         {
             var books= bookService.GetAllBooks();
             return Ok(books);
         }
+       */
         [HttpGet("{id}")]
         public IActionResult GetBookById(int id) {
             var book= bookService.GetBookById(id);
@@ -75,6 +76,18 @@ namespace BookStoreApi.Controllers
             }
 
             return Ok("Book Deleted");
+        }
+        [HttpGet]   // انا عملت كومنت علي get الي فوق عشان الترم بالروت الي في الفايل
+        public IActionResult SearchBooks([FromQuery] BookSearchRequest request)
+        {
+            var books = bookService.SerachBooks(request);
+            return Ok(books);
+        }
+        [HttpGet("reports/summary")]
+        public IActionResult GetSummary()
+        {
+            var summary = bookService.GetSummary();
+            return Ok(summary);
         }
 
 

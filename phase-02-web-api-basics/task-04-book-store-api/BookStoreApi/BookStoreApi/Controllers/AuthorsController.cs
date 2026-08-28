@@ -50,6 +50,25 @@ namespace BookStoreApi.Controllers
             return Ok(author);
 
         }
+        [HttpDelete("{id}")]
+        public IActionResult DeleteAuthor(int id)
+        {
+            try
+            {
+                var deleted = authorService.DeleteAuthor(id);
+
+                if (!deleted)
+                {
+                    return NotFound("Author Does Not Exist");
+                }
+
+                return Ok("Author Deleted");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
 
 
     }
