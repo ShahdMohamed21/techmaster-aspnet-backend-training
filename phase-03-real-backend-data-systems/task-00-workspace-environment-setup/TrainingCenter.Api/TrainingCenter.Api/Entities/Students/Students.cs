@@ -1,4 +1,6 @@
-﻿namespace TrainingCenter.Api.Entities.Students
+﻿using TrainingCenter.Api.Entities.Enrollments;
+
+namespace TrainingCenter.Api.Entities.Students
 {
     public class Student
     {
@@ -12,5 +14,6 @@
 
         public bool IsActive { get; set; }
         public StudentProfile? Profile { get; set; }
+        public ICollection<Enrollment> Enrollments { get; set; }
     }
 }

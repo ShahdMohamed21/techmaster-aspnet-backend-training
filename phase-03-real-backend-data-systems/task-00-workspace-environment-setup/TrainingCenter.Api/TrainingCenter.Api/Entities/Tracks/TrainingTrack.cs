@@ -1,4 +1,5 @@
-﻿using TrainingCenter.Api.Entities.Instructors;
+﻿using TrainingCenter.Api.Entities.Enrollments;
+using TrainingCenter.Api.Entities.Instructors;
 
 namespace TrainingCenter.Api.Entities.Tracks
 {
@@ -10,6 +11,7 @@ namespace TrainingCenter.Api.Entities.Tracks
 
         public int InstructorId { get; set; }
 
-        public Instructor Instructor { get; set; } 
+        public Instructor Instructor { get; set; }
+        public ICollection<Enrollment> Enrollments { get; set; }
     }
 }

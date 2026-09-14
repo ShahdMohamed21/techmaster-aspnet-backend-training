@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrainingCenter.Api.Data;
 
@@ -11,9 +12,11 @@ using TrainingCenter.Api.Data;
 namespace TrainingCenter.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260914164039_AddPaymentSummary")]
+    partial class AddPaymentSummary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,48 +56,6 @@ namespace TrainingCenter.Api.Migrations
                     b.HasIndex("TrainingTrackId");
 
                     b.ToTable("Enrollments");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 8,
-                            EnrollmentDate = new DateTime(2026, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            StudentId = 5,
-                            TrainingTrackId = 5
-                        },
-                        new
-                        {
-                            Id = 9,
-                            EnrollmentDate = new DateTime(2026, 2, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            StudentId = 5,
-                            TrainingTrackId = 7
-                        },
-                        new
-                        {
-                            Id = 10,
-                            EnrollmentDate = new DateTime(2026, 2, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            StudentId = 6,
-                            TrainingTrackId = 5
-                        },
-                        new
-                        {
-                            Id = 11,
-                            EnrollmentDate = new DateTime(2026, 2, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            StudentId = 7,
-                            TrainingTrackId = 6
-                        },
-                        new
-                        {
-                            Id = 12,
-                            EnrollmentDate = new DateTime(2026, 2, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            StudentId = 8,
-                            TrainingTrackId = 7
-                        });
                 });
 
             modelBuilder.Entity("TrainingCenter.Api.Entities.Instructors.Instructor", b =>
@@ -113,18 +74,6 @@ namespace TrainingCenter.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Instructors");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 5,
-                            FullName = "Ahmed Hassan"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            FullName = "Sara Mohamed"
-                        });
                 });
 
             modelBuilder.Entity("TrainingCenter.Api.Entities.Payments.PaymentSummary", b =>
@@ -182,48 +131,6 @@ namespace TrainingCenter.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Students");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 5,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "shahd@example.com",
-                            FullName = "Shahd Mohamed",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            Id = 6,
-                            CreatedAt = new DateTime(2026, 1, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "ahmed@example.com",
-                            FullName = "Ahmed Ali",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            Id = 7,
-                            CreatedAt = new DateTime(2026, 1, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "mariam@example.com",
-                            FullName = "Mariam Hassan",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            Id = 8,
-                            CreatedAt = new DateTime(2026, 1, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "omar@example.com",
-                            FullName = "Omar Khaled",
-                            IsActive = true
-                        },
-                        new
-                        {
-                            Id = 9,
-                            CreatedAt = new DateTime(2026, 1, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "salma@example.com",
-                            FullName = "Salma Ahmed",
-                            IsActive = true
-                        });
                 });
 
             modelBuilder.Entity("TrainingCenter.Api.Entities.Students.StudentProfile", b =>
@@ -281,26 +188,6 @@ namespace TrainingCenter.Api.Migrations
                     b.HasIndex("InstructorId");
 
                     b.ToTable("TrainingTracks");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 5,
-                            InstructorId = 5,
-                            Name = "Backend Development"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            InstructorId = 6,
-                            Name = "Frontend Development"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            InstructorId = 5,
-                            Name = "AI Fundamentals"
-                        });
                 });
 
             modelBuilder.Entity("TrainingCenter.Api.Entities.Enrollments.Enrollment", b =>
