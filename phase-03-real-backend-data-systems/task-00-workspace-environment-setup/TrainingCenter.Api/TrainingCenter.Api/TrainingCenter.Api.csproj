@@ -22,9 +22,6 @@
   <ItemGroup>
     <Folder Include="DTOs\Enrollments\" />
     <Folder Include="DTOs\Reports\" />
-    <Folder Include="DTOs\Tracks\" />
-    <Folder Include="Services\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

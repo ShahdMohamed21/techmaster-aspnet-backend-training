@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.DTOs.Students;
+using TrainingCenter.Api.Entities.DTOs.Tracks;
 
 namespace TrainingCenter.Api.Controllers
 {
@@ -35,6 +36,26 @@ namespace TrainingCenter.Api.Controllers
                 .ToListAsync();
 
             return Ok(students);
+        }
+
+        // projection
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTrackDetails(int id)
+        {
+            var track = await _context.TrainingTracks
+                .Where(t => t.Id == id)
+                .Select(t => new TrackDetailsDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    InstructorName = t.Instructor.FullName
+                })
+                .FirstOrDefaultAsync();
+
+            if (track == null)
+                return NotFound();
+
+            return Ok(track);
         }
     }
 }

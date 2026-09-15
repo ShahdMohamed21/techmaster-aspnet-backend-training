@@ -2,6 +2,7 @@
 
 public class StudentResponseDto
 {
+    // انا هنا مش حاطه كل ال field عشان بجرب بس جزء ال audit
     public int Id { get; set; }
 
     public string FullName { get; set; } = string.Empty;

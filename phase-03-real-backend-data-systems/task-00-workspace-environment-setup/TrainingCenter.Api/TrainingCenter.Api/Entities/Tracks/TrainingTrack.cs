@@ -10,7 +10,8 @@ namespace TrainingCenter.Api.Entities.Tracks
         public string Name { get; set; } = string.Empty;
 
         public int InstructorId { get; set; }
-
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public Instructor Instructor { get; set; }
         public ICollection<Enrollment> Enrollments { get; set; }
     }

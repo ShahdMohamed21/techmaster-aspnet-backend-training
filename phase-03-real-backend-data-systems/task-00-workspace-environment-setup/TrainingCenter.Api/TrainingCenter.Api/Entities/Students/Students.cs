@@ -13,7 +13,12 @@ namespace TrainingCenter.Api.Entities.Students
         public DateTime CreatedAt { get; set; }
 
         public bool IsActive { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+
+        public DateTime? UpdatedAt { get; set; }
         public StudentProfile? Profile { get; set; }
         public ICollection<Enrollment> Enrollments { get; set; }
+       
     }
 }
