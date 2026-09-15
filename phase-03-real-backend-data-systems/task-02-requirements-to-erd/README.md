@@ -1,53 +1,69 @@
-Task 02 – Requirements to ERD
-Overview
+# Task 03 - Training Center Database API
 
-Designed an Entity Relationship Diagram (ERD) for the TechMaster Academy training management system based on the given business requirements.
+## Overview
 
-Entities
+This task implements a database-driven **ASP.NET Core Web API** for TechMaster Academy. The system manages students, instructors, training tracks, enrollments, and payments using **SQL Server** and **Entity Framework Core**.
 
-The database contains five main entities:
+The API uses **DTOs, Services, Controllers, Swagger, and Postman** to provide a clean and maintainable backend architecture.
 
-Student – Stores student information.
-Instructor – Stores instructor information.
-TrainingTrack – Stores training track details and its main instructor.
-Enrollment – Connects students with training tracks and stores enrollment progress.
-Payment – Stores payment transactions related to enrollments.
-Relationships
-Student 1 → Many Enrollments
-Instructor 1 → Many TrainingTracks
-TrainingTrack 1 → Many Enrollments
-Enrollment 1 → Many Payments
+## Main Entities
 
-A student can enroll in multiple training tracks, and each training track can have multiple students through the Enrollment entity.
+- **Student:** Stores student profile information and enrollment data.
+- **Instructor:** Stores instructor information and assigned training tracks.
+- **TrainingTrack:** Represents available training tracks, capacity, dates, status, and instructor assignment.
+- **Enrollment:** Connects students with training tracks and stores enrollment status and progress.
+- **Payment:** Stores payment transactions associated with enrollments.
 
-An enrollment can have multiple payments because students may pay in multiple installments.
+## API Areas
 
-Key Design Decisions
-Primary keys uniquely identify each entity.
-Foreign keys are used to maintain relationships between entities.
-Enrollment acts as the bridge between Student and TrainingTrack.
-Payment is linked to Enrollment rather than directly to Student or TrainingTrack.
-Amount uses a decimal type for financial values.
-System-generated dates use UTC.
-Unique constraints are applied to fields such as Student Email, Instructor Email, and Training Track Code.
-Business Questions Supported
+- **Students:** Create, update, retrieve, search, filter, and soft-delete students.
+- **Instructors:** Manage instructors and retrieve their assigned tracks.
+- **Training Tracks:** Manage tracks, instructors, capacity, and track status.
+- **Enrollments:** Manage student registrations, status changes, and enrollment history.
+- **Payments:** Create and manage payments and payment history.
+- **Reports:** Provide dashboard statistics, unpaid enrollments, track capacity, and revenue summaries.
 
-The database design can answer questions such as:
+## Architecture
 
-Which students are enrolled in a specific track?
-Which tracks have available seats?
-Which enrollments are unpaid?
-How much revenue did each track generate?
-Which instructor has the highest workload?
-Which students have active enrollments?
-Which tracks start this month?
-What is the payment history for an enrollment?
-Which tracks are full?
-How many enrollments exist by status?
-Deliverables
-ERD Diagram
-Tables and fields
-Primary and foreign keys
-Relationship definitions
-Business rules
-Business questions supported by the database design
+The API follows a layered structure:
+
+- **Controllers:** Handle HTTP requests and responses.
+- **Services:** Contain business logic and application rules.
+- **DTOs:** Control the data exposed through the API.
+- **Entities:** Represent database tables.
+- **Data:** Contains `DbContext` and database configuration.
+- **Migrations:** Manage database schema changes.
+
+## Database
+
+- **SQL Server** is used as the database.
+- **Entity Framework Core** is used for ORM and database operations.
+- EF Core migrations are used to create and update the database schema.
+
+## Business Rules
+
+- Student emails must be unique.
+- Track codes must be unique.
+- A student cannot enroll in the same track more than once.
+- A student cannot enroll when the track reaches its capacity.
+- Enrollment status changes must follow valid transitions.
+- Students and tracks use soft delete where applicable.
+- Payments are linked to enrollments.
+- Financial amounts use decimal values.
+
+## API Documentation & Testing
+
+- **Swagger/OpenAPI** is used to document and explore the API.
+- **Postman** is used to test API endpoints.
+- Success and failure test cases are documented as evidence.
+
+## Response Format
+
+API responses follow a consistent structure:
+
+```json
+{
+  "success": true,
+  "message": "Student created successfully.",
+  "data": {}
+}
