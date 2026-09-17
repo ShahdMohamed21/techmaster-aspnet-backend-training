@@ -105,8 +105,16 @@ namespace TrainngCenter.Api.Controllers
         [HttpGet("/api/students/{id}/enrollments")]
         public async Task<IActionResult> GetStudentEnrollments(int id)
         {
-            var result =
-                await _service.GetStudentEnrollmentsAsync(id);
+            var result = await _service.GetStudentEnrollmentsAsync(id);
+
+            if(result == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Student Not Found"
+                });
+            }
 
             return Ok(new
             {

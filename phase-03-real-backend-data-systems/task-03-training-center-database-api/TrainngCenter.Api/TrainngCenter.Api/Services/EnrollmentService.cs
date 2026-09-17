@@ -118,8 +118,10 @@ namespace TrainngCenter.Api.Services
             return _mapper.Map<EnrollmentDetailsResponse>(enrollment);
         }
 
-        public async Task<List<EnrollmentListItemResponse>> GetStudentEnrollmentsAsync(int studentId)
+        public async Task<List<EnrollmentListItemResponse>?> GetStudentEnrollmentsAsync(int studentId)
         {
+            var student=await _context.Students.FirstOrDefaultAsync(s=>s.StudentId == studentId);
+            if (student == null) return null;
             var enrollments = await _context.Enrollments
                 .AsNoTracking()
                 .Include(e => e.Student)
