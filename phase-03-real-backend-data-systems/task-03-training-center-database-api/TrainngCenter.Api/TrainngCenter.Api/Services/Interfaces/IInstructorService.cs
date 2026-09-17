@@ -1,4 +1,5 @@
 ﻿using TrainngCenter.Api.DTOs.Instructors;
+using TrainngCenter.Api.DTOs.Tracks;
 
 namespace TrainngCenter.Api.Services.Interfaces
 {
@@ -10,7 +11,7 @@ namespace TrainngCenter.Api.Services.Interfaces
 
         Task<(bool Success, string Message)>UpdateAsync(int id, UpdateInstructorRequest request);
 
-      //  Task<List<TrackListItemResponse>?> GetTracksAsync(int id);
+        Task<List<TrackListItemResponse>?> GetTracksAsync(int id);
 
 
     }

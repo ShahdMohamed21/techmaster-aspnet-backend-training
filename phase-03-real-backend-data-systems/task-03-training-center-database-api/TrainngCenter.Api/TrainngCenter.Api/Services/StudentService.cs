@@ -12,19 +12,13 @@ namespace TrainingCenter.Api.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public StudentService(
-            ApplicationDbContext context,
-            IMapper mapper)
+        public StudentService(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
         }
 
-        public async Task<object> GetAllAsync(
-            string? search,
-            bool? isActive,
-            int page,
-            int pageSize)
+        public async Task<object> GetAllAsync(string? search, bool? isActive, int page, int pageSize)
         {
             if (page < 1)
                 page = 1;
@@ -32,28 +26,21 @@ namespace TrainingCenter.Api.Services
             if (pageSize < 1)
                 pageSize = 10;
 
-            var query = _context.Students
-                .AsNoTracking()
-                .Where(s => !s.IsDeleted);
+            var query = _context.Students.AsNoTracking().Where(s => !s.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(s =>
-                    s.FullName.Contains(search) ||
-                    s.Email.Contains(search));
+                query = query.Where(s => s.FullName.Contains(search) || s.Email.Contains(search));
             }
 
             if (isActive.HasValue)
             {
-                query = query.Where(s =>
-                    s.IsActive == isActive.Value);
+                query = query.Where(s => s.IsActive == isActive.Value);
             }
 
             var totalCount = await query.CountAsync();
 
-            var students = await query
-                .OrderBy(s => s.StudentId)
-                .Skip((page - 1) * pageSize)
+            var students = await query.OrderBy(s => s.StudentId) .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
@@ -68,10 +55,7 @@ namespace TrainingCenter.Api.Services
 
         public async Task<StudentDetailsResponse?> GetByIdAsync(int id)
         {
-            var student = await _context.Students
-                .AsNoTracking()
-                .Include(s => s.Enrollments)
-                .FirstOrDefaultAsync(s =>
+            var student = await _context.Students.AsNoTracking().Include(s => s.Enrollments).FirstOrDefaultAsync(s =>
                     s.StudentId == id &&
                     !s.IsDeleted);
 
@@ -88,11 +72,9 @@ namespace TrainingCenter.Api.Services
             return response;
         }
 
-        public async Task<(bool Success, string Message, StudentDetailsResponse? Data)>
-            CreateAsync(CreateStudentRequest request)
+        public async Task<(bool Success, string Message, StudentDetailsResponse? Data)> CreateAsync(CreateStudentRequest request)
         {
-            var emailExists = await _context.Students
-                .AnyAsync(s => s.Email == request.Email);
+            var emailExists = await _context.Students .AnyAsync(s => s.Email == request.Email);
 
             if (emailExists)
                 return (false, "A student with this email already exists", null);
@@ -112,21 +94,14 @@ namespace TrainingCenter.Api.Services
             return (true, "Student created successfully", response);
         }
 
-        public async Task<(bool Success, string Message)>
-            UpdateAsync(int id, UpdateStudentRequest request)
+        public async Task<(bool Success, string Message)> UpdateAsync(int id, UpdateStudentRequest request)
         {
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s =>
-                    s.StudentId == id &&
-                    !s.IsDeleted);
+            var student = await _context.Students .FirstOrDefaultAsync(s =>  s.StudentId == id && !s.IsDeleted);
 
             if (student == null)
                 return (false, "Student not found");
 
-            var emailExists = await _context.Students
-                .AnyAsync(s =>
-                    s.Email == request.Email &&
-                    s.StudentId != id);
+            var emailExists = await _context.Students.AnyAsync(s => s.Email == request.Email && s.StudentId != id);
 
             if (emailExists)
                 return (false, "Another student already uses this email");
@@ -140,13 +115,9 @@ namespace TrainingCenter.Api.Services
             return (true, "Student updated successfully");
         }
 
-        public async Task<(bool Success, string Message)>
-            DeleteAsync(int id)
+        public async Task<(bool Success, string Message)> DeleteAsync(int id)
         {
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s =>
-                    s.StudentId == id &&
-                    !s.IsDeleted);
+            var student = await _context.Students .FirstOrDefaultAsync(s =>  s.StudentId == id && !s.IsDeleted);
 
             if (student == null)
                 return (false, "Student not found");

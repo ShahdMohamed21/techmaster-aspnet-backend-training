@@ -87,6 +87,23 @@ namespace TrainngCenter.Api.Controllers
                 message = result.Message
             });
         }
+        [HttpGet("{id}/tracks")]
+        public async Task<IActionResult> GetTracks(int id)
+        {
+            var result = await _instructorService.GetTracksAsync(id);
 
+            if (result == null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Instructor not found."
+                });
+
+            return Ok(new
+            {
+                success = true,
+                data = result
+            });
+        }
     }
 }

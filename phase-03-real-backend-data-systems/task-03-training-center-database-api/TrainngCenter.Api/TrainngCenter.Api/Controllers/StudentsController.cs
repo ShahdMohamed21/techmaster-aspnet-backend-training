@@ -16,18 +16,9 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(
-            string? search,
-            bool? isActive,
-            int page = 1,
-            int pageSize = 10)
+        public async Task<IActionResult> GetAll( string? search, bool? isActive,int page = 1, int pageSize = 10)
         {
-            var result = await _service.GetAllAsync(
-                search,
-                isActive,
-                page,
-                pageSize);
-
+            var result = await _service.GetAllAsync(search, isActive, page,pageSize);
             return Ok(new
             {
                 success = true,
@@ -57,8 +48,7 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(
-            CreateStudentRequest request)
+        public async Task<IActionResult> Create( CreateStudentRequest request)
         {
             var result = await _service.CreateAsync(request);
 
@@ -83,9 +73,7 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(
-            int id,
-            UpdateStudentRequest request)
+        public async Task<IActionResult> Update( int id, UpdateStudentRequest request)
         {
             var result = await _service.UpdateAsync(id, request);
 
@@ -112,7 +100,7 @@ namespace TrainingCenter.Api.Controllers
             });
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.DeleteAsync(id);
