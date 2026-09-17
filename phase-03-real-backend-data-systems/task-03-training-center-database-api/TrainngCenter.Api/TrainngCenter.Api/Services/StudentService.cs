@@ -30,7 +30,10 @@ namespace TrainingCenter.Api.Services
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(s => s.FullName.Contains(search) || s.Email.Contains(search));
+                query = query.Where(s =>
+                    s.FullName.Contains(search) ||
+                    s.Email.Contains(search) ||
+                    s.PhoneNumber.Contains(search));
             }
 
             if (isActive.HasValue)
@@ -43,12 +46,15 @@ namespace TrainingCenter.Api.Services
             var students = await query.OrderBy(s => s.StudentId) .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+             var totalPages = (int)(
+              totalCount / (double)pageSize);
 
             return new
             {
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
+                totalPages = totalPages,
                 Data = _mapper.Map<List<StudentListItemResponse>>(students)
             };
         }
