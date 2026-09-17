@@ -144,7 +144,7 @@ namespace TrainngCenter.Api.Services
 
             if (!allowedStatuses.Contains(status))
                 throw new ArgumentException(
-                    "Invalid payment status. Allowed values: Pending, Paid, Failed, Refunded");
+                    "Invalid payment status. Allowed values: Pending,Paid, Failed, Refunded");
 
             payment.PaymentStatus = status;
 

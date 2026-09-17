@@ -1,6 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TrainingCenter.Api.Data;
+using TrainngCenter.Api.DTOs.Instructors;
+using TrainngCenter.Api.DTOs.Payments;
 using TrainngCenter.Api.DTOs.Reports;
+using TrainngCenter.Api.DTOs.Tracks;
 using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Services
@@ -146,6 +150,81 @@ namespace TrainngCenter.Api.Services
 
             return result;
         }
+        public async Task<List<TopTrackResponse>> GetTopTracksAsync(int top = 5)
+        {
+            var result = await _context.Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    e.Status == "Active" &&
+                    !e.Student.IsDeleted &&
+                    !e.TrainingTrack.IsDeleted)
+                .GroupBy(e => new
+                {
+                    e.TrainingTrackId,
+                    e.TrainingTrack.Title
+                })
+                .Select(g => new TopTrackResponse
+                {
+                    TrainingTrackId = g.Key.TrainingTrackId,
+                    Title = g.Key.Title,
+                    ActiveEnrollmentCount = g.Count()
+                })
+                .OrderByDescending(x => x.ActiveEnrollmentCount)
+                .Take(top)
+                .ToListAsync();
+
+            return result;
+        }
+        public async Task<List<InstructorWorkloadResponse>> GetInstructorWorkloadAsync()
+        {
+            var result = await _context.TrainingTracks
+                .AsNoTracking()
+                .Where(t =>
+                    !t.IsDeleted &&
+                    t.InstructorId != null)
+                .GroupBy(t => new
+                {
+                    t.InstructorId,
+                    t.Instructor.FullName
+                })
+                .Select(g => new InstructorWorkloadResponse
+                {
+                    InstructorId = g.Key.InstructorId!,
+                    InstructorName = g.Key.FullName,
+
+                    TrackCount = g.Count(),
+
+                    ActiveStudentCount = g
+                        .SelectMany(t => t.Enrollments)
+                        .Count(e =>
+                            e.Status == "Active" &&
+                            !e.Student.IsDeleted)
+                })
+                .ToListAsync();
+
+            return result;
+        }
+        public async Task<List<StudentWithoutPaymentResponse>> GetStudentsWithoutPaymentsAsync()
+        {
+            var result = await _context.Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    (e.Status == "Active" || e.Status == "Pending") &&
+                    !e.Student.IsDeleted &&
+                    !e.Payments.Any())
+                .Select(e => new StudentWithoutPaymentResponse
+                {
+                    StudentId = e.Student.StudentId,
+                    FullName = e.Student.FullName,
+                    Email = e.Student.Email,
+                    Phone = e.Student.PhoneNumber
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return result;
+        }
+       
     }
     
 }

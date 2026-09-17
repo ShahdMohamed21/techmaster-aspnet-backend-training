@@ -7,5 +7,8 @@
         public string Email { get; set; } = null!;
         public string? PhoneNumber { get; set; }
         public bool IsActive { get; set; }
+        public string EnrollmentStatus { get; set; }
+        public DateTime EnrollmentDate { get; set; }
+
     }
 }

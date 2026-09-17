@@ -137,16 +137,23 @@ namespace TrainngCenter.Api.Services
             if (track == null)
                 return null;
             var students = await _context.Enrollments
-                .AsNoTracking()
-                .Where(e =>
-                    e.TrainingTrackId == id &&
-                    e.Student.IsDeleted == false)
-                .Include(e => e.Student)
-                .Select(e => e.Student)
-                .Distinct()
-                .ToListAsync();
+     .AsNoTracking()
+     .Where(e =>
+         e.TrainingTrackId == id &&
+         !e.Student.IsDeleted)
+     .Select(e => new StudentListItemResponse
+     {
+         StudentId = e.Student.StudentId,
+         FullName = e.Student.FullName,
+         Email = e.Student.Email,
+         PhoneNumber = e.Student.PhoneNumber,
+         IsActive = e.Student.IsActive,
+         EnrollmentStatus = e.Status,
+         EnrollmentDate = e.EnrollmentDate
+     })
+     .ToListAsync();
 
-            return _mapper.Map<List<StudentListItemResponse>>(students);
+            return students;
         }
 
         public async Task<(bool success, string message)> UpdateAsync(int id, UpdateTrackRequest request)
@@ -175,5 +182,6 @@ namespace TrainngCenter.Api.Services
             await _context.SaveChangesAsync();
             return (true, "Training track updated successfully");
         }
+      
     }
 }

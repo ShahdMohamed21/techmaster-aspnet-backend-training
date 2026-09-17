@@ -102,6 +102,7 @@ namespace TrainngCenter.Api.Services
                 InstructorName = t.Instructor.FullName
             }).ToList();
         }
+       
     }
 }
   

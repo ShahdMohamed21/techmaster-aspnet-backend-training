@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TrainingCenter.Api.Entities;
 using TrainngCenter.Api.DTOs.Instructors;
+using TrainngCenter.Api.Services;
 using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Controllers
@@ -96,7 +97,7 @@ namespace TrainngCenter.Api.Controllers
                 return NotFound(new
                 {
                     success = false,
-                    message = "Instructor not found."
+                    message = "Instructor not found"
                 });
 
             return Ok(new
@@ -105,5 +106,6 @@ namespace TrainngCenter.Api.Controllers
                 data = result
             });
         }
+       
     }
 }
