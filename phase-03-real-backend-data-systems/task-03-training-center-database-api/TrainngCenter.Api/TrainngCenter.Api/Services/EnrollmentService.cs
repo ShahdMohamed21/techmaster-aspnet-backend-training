@@ -59,7 +59,7 @@ namespace TrainngCenter.Api.Services
             var enrollment = _mapper.Map<Enrollment>(request);
             enrollment.EnrollmentDate = DateTime.UtcNow;
             enrollment.CreatedAt = DateTime.UtcNow;
-            enrollment.Status = "Active";
+            enrollment.Status = "Pending";
             enrollment.ProgressPercentage = 0;
 
             _context.Enrollments.Add(enrollment);
@@ -167,11 +167,7 @@ namespace TrainngCenter.Api.Services
                     "Status must be Completed or Cancelled");
             }
 
-            if (enrollment.Status != "Active")
-            {
-                throw new ArgumentException(
-                    "Only active enrollments can be completed or cancelled");
-            }
+           
 
             enrollment.Status = status;
             enrollment.UpdatedAt = DateTime.UtcNow;

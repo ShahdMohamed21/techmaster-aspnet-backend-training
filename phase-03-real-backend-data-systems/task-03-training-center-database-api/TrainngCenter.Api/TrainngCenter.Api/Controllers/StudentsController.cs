@@ -54,7 +54,8 @@ namespace TrainingCenter.Api.Controllers
 
             if (!result.Success)
             {
-                return Conflict(new
+               
+                return BadRequest(new
                 {
                     success = false,
                     message = result.Message
