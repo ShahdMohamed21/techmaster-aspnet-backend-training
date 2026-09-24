@@ -353,5 +353,252 @@ The API does not rely on returning EF Core entities directly.
 Examples:
 
 ```text
-CreateStudentReq
+CreateStudentRequest
+UpdateStudentRequest
+CreateTrackRequest
+CreateEnrollmentRequest
+CreatePaymentRequest
 ```
+
+### Response DTOs
+
+Examples:
+
+```text
+StudentListItemResponse
+StudentDetailsResponse
+TrackDetailsResponse
+EnrollmentDetailsResponse
+PaymentResponse
+Report DTOs
+```
+
+DTOs control which data is received from and returned to the client.
+
+---
+
+## 🛡 Business Rules
+
+The system contains validation rules to protect data consistency.
+
+### Student
+
+* Email must be unique.
+* Deleted students are excluded from normal operations.
+
+### Instructor
+
+* Email must be unique.
+* Only valid instructors can be assigned where required.
+
+### Training Track
+
+* Capacity must be greater than zero.
+* Start date must be before end date.
+* Capacity cannot conflict with existing active enrollments.
+
+### Enrollment
+
+* Duplicate active enrollment is not allowed.
+* Enrollment cannot exceed track capacity.
+* Only valid/open tracks can accept new enrollments.
+
+### Payment
+
+* Amount must be greater than zero.
+* Enrollment must exist.
+* Reference number must be unique.
+* Payment status must be valid.
+
+---
+
+## 🗑 Soft Delete
+
+The system uses soft deletion for entities that should not be permanently removed.
+
+Instead of deleting the database row, the application updates:
+
+```text
+IsDeleted = true
+DeletedAt = current date/time
+```
+
+Normal queries then filter out deleted records.
+
+This keeps historical information available in the database.
+
+---
+
+## 🔄 EF Core and Database
+
+Entity Framework Core is responsible for communicating with SQL Server.
+
+The project uses:
+
+* `DbContext`
+* `DbSet`
+* LINQ
+* Async queries
+* Migrations
+* Projections
+* Foreign keys
+* Entity relationships
+
+Database schema changes are managed through EF Core migrations.
+
+Example:
+
+```powershell
+Add-Migration MigrationName
+Update-Database
+```
+
+---
+
+## 📄 API Response Structure
+
+The API returns structured responses containing success information and the requested data.
+
+Example:
+
+```json
+{
+  "success": true,
+  "data": {
+    "enrollmentId": 1,
+    "studentId": 2,
+    "trainingTrackId": 3,
+    "status": "Pending"
+  }
+}
+```
+
+For invalid requests or missing resources, the API returns appropriate HTTP status codes with clear error messages.
+
+---
+
+## 🔎 Pagination and Projection
+
+Large collections are handled using pagination.
+
+For example:
+
+```text
+pageNumber = 1
+pageSize = 10
+```
+
+EF Core uses:
+
+```text
+Skip()
+Take()
+```
+
+The API also uses `Select` projection to return only the required fields instead of loading complete entities.
+
+This reduces unnecessary data retrieval.
+
+---
+
+## 🧪 Testing and Verification
+
+The API can be tested through:
+
+### Swagger
+
+Swagger provides interactive API documentation and allows endpoints to be executed directly from the browser.
+
+### Postman
+
+Postman is used to verify API behavior, including:
+
+* Successful requests.
+* Validation failures.
+* Not-found scenarios.
+* Business rule violations.
+* CRUD operations.
+
+Evidence for API testing is stored in the `postman/` and `evidence/` folders.
+
+---
+
+## 🚀 Running the Project
+
+### Prerequisites
+
+* .NET 8 SDK
+* SQL Server
+* Visual Studio 2022 or VS Code
+
+### Restore Packages
+
+```bash
+dotnet restore
+```
+
+### Apply Database Migrations
+
+```bash
+dotnet ef database update
+```
+
+### Run the API
+
+```bash
+dotnet run
+```
+
+Then open Swagger:
+
+```text
+https://localhost:<port>/swagger
+```
+
+---
+
+## 🌐 Database Environments
+
+The project supports working with:
+
+* Local SQL Server during development.
+* Remote SQL Server for deployment.
+
+The connection string is configured through application configuration and should not contain publicly exposed credentials.
+
+---
+
+## 📸 Evidence
+
+The project evidence can include:
+
+* Swagger screenshots.
+* Postman requests and responses.
+* Database tables.
+* Migration results.
+* Remote database evidence.
+* API deployment evidence.
+
+---
+
+## 🏁 Task Status
+
+### Completed ✅
+
+The Training Center API implements the required Phase 03 functionality, including:
+
+* Student management.
+* Instructor management.
+* Training track management.
+* Enrollment management.
+* Payment management.
+* Business validation.
+* DTO-based API responses.
+* Service-layer architecture.
+* EF Core database access.
+* SQL Server integration.
+* Soft deletion.
+* Pagination and projection.
+* Reporting endpoints.
+* Swagger documentation.
+* Postman testing.
