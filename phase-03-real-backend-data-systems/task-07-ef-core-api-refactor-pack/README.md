@@ -618,7 +618,3 @@ The refactored implementation improves the original API by introducing:
 * Service-based architecture
 
 The original implementation is preserved for comparison and evidence, while the refactored implementation provides the improved API behavior.
-
-
-
-عشان نتأكد إن عندك **الـ 6 commits المطلوبة**، ولو ناقصين نعملهم بطريقة صحيحة بدل ما نعمل commits شكلية.
