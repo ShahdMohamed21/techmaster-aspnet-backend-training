@@ -17,6 +17,7 @@ namespace TrainingCenter.Api
 
             builder.Services.AddControllers();
 
+
             builder.Services.AddSingleton<IMapper>(sp =>
             {
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
