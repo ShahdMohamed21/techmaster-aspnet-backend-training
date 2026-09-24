@@ -79,7 +79,9 @@ namespace TrainngCenter.Api.Services
             }
 
             var enrollmentExists = await _context.Enrollments
-                .AnyAsync(e => e.EnrollmentId == request.EnrollmentId);
+            .AnyAsync(e =>
+             e.EnrollmentId == request.EnrollmentId &&
+            !e.IsDeleted);
 
             if (!enrollmentExists)
             {
@@ -110,7 +112,9 @@ namespace TrainngCenter.Api.Services
         public async Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync(int enrollmentId)
         {
             var enrollmentExists = await _context.Enrollments
-                .AnyAsync(e => e.EnrollmentId == enrollmentId);
+            .AnyAsync(e =>
+            e.EnrollmentId == enrollmentId &&
+           !e.IsDeleted);
 
             if (!enrollmentExists)
             {

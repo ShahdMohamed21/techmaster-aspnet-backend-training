@@ -16,10 +16,30 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? status,[FromQuery] int? trackId,[FromQuery] int? studentId,[FromQuery] string? paymentStatus)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? status,
+            [FromQuery] int? trackId,
+            [FromQuery] int? studentId,
+            [FromQuery] string? paymentStatus,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
+            if (pageNumber < 1 || pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Page number must be greater than 0 and page size must be between 1 and 100"
+                });
+            }
+
             var result = await _service.GetAllAsync(
-                status, trackId, studentId, paymentStatus);
+                status,
+                trackId,
+                studentId,
+                paymentStatus,
+                pageNumber,
+                pageSize);
 
             return Ok(new
             {
@@ -28,17 +48,19 @@ namespace TrainngCenter.Api.Controllers
             });
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
 
             if (result == null)
+            {
                 return NotFound(new
                 {
                     success = false,
                     message = "Enrollment was not found"
                 });
+            }
 
             return Ok(new
             {
@@ -48,7 +70,8 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateEnrollmentRequest request)
+        public async Task<IActionResult> Create(
+            [FromBody] CreateEnrollmentRequest request)
         {
             try
             {
@@ -73,18 +96,25 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
-        [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, UpdateEnrollmentStatusRequest request)
+        [HttpPut("{id:int}/status")]
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromBody] UpdateEnrollmentStatusRequest request)
         {
             try
             {
-                var updated = await _service.UpdateStatusAsync(id, request.Status);
+                var updated = await _service.UpdateStatusAsync(
+                    id,
+                    request.Status);
+
                 if (!updated)
+                {
                     return NotFound(new
                     {
                         success = false,
                         message = "Enrollment was not found"
                     });
+                }
 
                 return Ok(new
                 {
@@ -102,17 +132,17 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
-        [HttpGet("/api/students/{id}/enrollments")]
+        [HttpGet("/api/students/{id:int}/enrollments")]
         public async Task<IActionResult> GetStudentEnrollments(int id)
         {
             var result = await _service.GetStudentEnrollmentsAsync(id);
 
-            if(result == null)
+            if (result == null)
             {
                 return NotFound(new
                 {
                     success = false,
-                    message = "Student Not Found"
+                    message = "Student was not found"
                 });
             }
 
@@ -122,6 +152,25 @@ namespace TrainngCenter.Api.Controllers
                 data = result
             });
         }
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Enrollment was not found"
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = "Enrollment deleted successfully"
+            });
+        }
     }
 }
-

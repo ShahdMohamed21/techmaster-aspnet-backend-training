@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TrainingCenter.Api.Entities;
 using TrainngCenter.Api.DTOs.Payments;
 using TrainngCenter.Api.Services.Interfaces;
 
@@ -16,9 +17,11 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate,[FromQuery] string? status)
+        public async Task<IActionResult> GetAll([FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate, [FromQuery] string? status)
         {
-            if (fromDate.HasValue &&toDate.HasValue &&  fromDate > toDate)
+            if (fromDate.HasValue &&
+                toDate.HasValue &&
+                fromDate > toDate)
             {
                 return BadRequest(new
                 {
@@ -27,7 +30,11 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
-            var result = await _service.GetAllAsync(fromDate, toDate, status);
+            var result = await _service.GetAllAsync(
+                fromDate,
+                toDate,
+                status);
+
             return Ok(new
             {
                 success = true,
@@ -35,17 +42,19 @@ namespace TrainngCenter.Api.Controllers
             });
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
 
             if (result == null)
+            {
                 return NotFound(new
                 {
                     success = false,
                     message = "Payment was not found"
                 });
+            }
 
             return Ok(new
             {
@@ -55,7 +64,7 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePaymentRequest request)
+        public async Task<IActionResult> Create([FromBody] CreatePaymentRequest request)
         {
             try
             {
@@ -80,12 +89,12 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
-        [HttpGet("/api/enrollments/{id}/payments")]
+        [HttpGet("~/api/enrollments/{id:int}/payments")]
         public async Task<IActionResult> GetEnrollmentPayments(int id)
         {
             try
             {
-                var result =await _service.GetEnrollmentPaymentsAsync(id);
+                var result = await _service.GetEnrollmentPaymentsAsync(id);
 
                 return Ok(new
                 {
@@ -103,19 +112,25 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
-        [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, UpdatePaymentStatusRequest request)
+        [HttpPut("{id:int}/status")]
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromBody] UpdatePaymentStatusRequest request)
         {
             try
             {
-                var updated = await _service.UpdateStatusAsync( id, request.PaymentStatus);
+                var updated = await _service.UpdateStatusAsync(
+                    id,
+                    request.PaymentStatus);
 
                 if (!updated)
+                {
                     return NotFound(new
                     {
                         success = false,
                         message = "Payment was not found"
                     });
+                }
 
                 return Ok(new
                 {
@@ -134,3 +149,5 @@ namespace TrainngCenter.Api.Controllers
         }
     }
 }
+
+

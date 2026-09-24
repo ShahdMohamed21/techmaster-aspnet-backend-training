@@ -29,7 +29,6 @@
 
         public TrainingTrack TrainingTrack { get; set; } = null!;
 
-        public ICollection<Payment> Payments { get; set; }
-           
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }
