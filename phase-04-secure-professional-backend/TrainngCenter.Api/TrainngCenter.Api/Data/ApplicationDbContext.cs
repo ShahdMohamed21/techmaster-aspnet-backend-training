@@ -15,11 +15,14 @@ namespace TrainingCenter.Api.Data
             modelBuilder.ApplyConfigurationsFromAssembly(
                 typeof(ApplicationDbContext).Assembly);
         }
+      
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Instructor> Instructors { get; set; }
         public DbSet<TrainingTrack> TrainingTracks { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }
