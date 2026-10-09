@@ -1,4 +1,5 @@
-﻿using TrainingCenter.Api.DTOs.Students;
+﻿using System;
+using TrainingCenter.Api.DTOs.Students;
 using TrainngCenter.Api.DTOs.Tracks;
 
 namespace TrainngCenter.Api.Services.Interfaces
@@ -11,6 +12,9 @@ namespace TrainngCenter.Api.Services.Interfaces
         Task<(bool success, string message)> UpdateAsync(int id , UpdateTrackRequest request);
         Task<(bool success, string message)> DeleteAsync(int id);
         Task<List<StudentListItemResponse>?> GetStudentsAsync(int id);
+        
+        Task<bool> AssignInstructorAsync(int trackId, int instructorId);
+
 
 
 

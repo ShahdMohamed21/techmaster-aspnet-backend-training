@@ -1,24 +1,31 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TrainingCenter.Api.DTOs.Students;
 using TrainingCenter.Api.Services.Interfaces;
+using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainingCenter.Api.Controllers
 {
     [ApiController]
     [Route("api/students")]
+    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly IStudentService _service;
+        private readonly ICurrentUserService _currentUserService;
 
-        public StudentsController(IStudentService service)
+        public StudentsController(IStudentService service, ICurrentUserService currentUserService)
         {
             _service = service;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll( string? search, bool? isActive,int page = 1, int pageSize = 10)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll(string? search,bool? isActive,int page = 1,int pageSize = 10)
         {
-            var result = await _service.GetAllAsync(search, isActive, page,pageSize);
+            var result = await _service.GetAllAsync(search, isActive, page, pageSize);
+
             return Ok(new
             {
                 success = true,
@@ -27,8 +34,14 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> GetById(int id)
         {
+            if (_currentUserService.Role == "Student" && _currentUserService.StudentId != id)
+            {
+                return Forbid();
+            }
+
             var result = await _service.GetByIdAsync(id);
 
             if (result == null)
@@ -48,13 +61,13 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create( CreateStudentRequest request)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create(CreateStudentRequest request)
         {
             var result = await _service.CreateAsync(request);
 
             if (!result.Success)
             {
-               
                 return BadRequest(new
                 {
                     success = false,
@@ -74,18 +87,26 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update( int id, UpdateStudentRequest request)
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> Update(int id,UpdateStudentRequest request)
         {
+            if (_currentUserService.Role == "Student" && _currentUserService.StudentId != id)
+            {
+                return Forbid();
+            }
+
             var result = await _service.UpdateAsync(id, request);
 
             if (!result.Success)
             {
                 if (result.Message == "Student not found")
+                {
                     return NotFound(new
                     {
                         success = false,
                         message = result.Message
                     });
+                }
 
                 return Conflict(new
                 {
@@ -102,6 +123,7 @@ namespace TrainingCenter.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.DeleteAsync(id);

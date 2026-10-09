@@ -18,5 +18,6 @@ namespace TrainingCenter.Api.Services.Interfaces
         Task<List<TrackStudentResponse>> GetTrackStudentsAsync(int trackId);
 
         Task<bool> DeleteAsync(int id);
+        Task<int?> GetTrackInstructorIdAsync(int trackId);
     }
 }

@@ -85,6 +85,10 @@ namespace TrainingCenter.Api
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddHttpContextAccessor();
+
+            builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddEndpointsApiExplorer();

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.Entities;
 using TrainngCenter.Api.DTOs.Instructors;
+using TrainngCenter.Api.DTOs.Students;
 using TrainngCenter.Api.DTOs.Tracks;
 using TrainngCenter.Api.Services.Interfaces;
 
@@ -102,7 +103,55 @@ namespace TrainngCenter.Api.Services
                 InstructorName = t.Instructor.FullName
             }).ToList();
         }
-       
+        public async Task<List<TrackListItemResponse>> GetMyTracksAsync(int instructorId)
+        {
+            return await _context.TrainingTracks
+                .AsNoTracking()
+                .Where(t =>
+                    t.InstructorId == instructorId &&
+                    !t.IsDeleted)
+                .Include(t => t.Enrollments)
+                .Select(t => new TrackListItemResponse
+                {
+                    TrainingTrackId = t.TrainingTrackId,
+                    Title = t.Title,
+                    Code = t.Code,
+                    Level = t.Level,
+                    Status = t.Status,
+                    Capacity = t.Capacity,
+                    EnrolledStudents = t.Enrollments.Count,
+                    InstructorName = t.Instructor.FullName
+                })
+                .ToListAsync();
+        }
+        public async Task<List<TrackStudentResponse>> GetTrackStudentsAsync(int instructorId, int trackId)
+        {
+            var trackExists = await _context.TrainingTracks
+                .AnyAsync(t =>
+                    t.TrainingTrackId == trackId &&
+                    t.InstructorId == instructorId &&
+                    !t.IsDeleted);
+
+            if (!trackExists)
+                return null!;
+
+            return await _context.Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    e.TrainingTrackId == trackId &&
+                    !e.IsDeleted)
+                .Select(e => new TrackStudentResponse
+                {
+                    StudentId = e.Student.StudentId,
+                    StudentName = e.Student.FullName,
+                    Email = e.Student.Email,
+                    EnrollmentId = e.EnrollmentId,
+                    EnrollmentStatus = e.Status,
+                    ProgressPercentage = e.ProgressPercentage
+                })
+                .ToListAsync();
+        }
+
     }
 }
   

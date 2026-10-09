@@ -291,5 +291,13 @@ namespace TrainngCenter.Api.Services
 
             return true;
         }
+        public async Task<int?> GetTrackInstructorIdAsync(int trackId)
+        {
+            return await _context.TrainingTracks
+                .AsNoTracking()
+                .Where(t => t.TrainingTrackId == trackId && !t.IsDeleted)
+                .Select(t => (int?)t.InstructorId)
+                .FirstOrDefaultAsync();
+        }
     }
 }

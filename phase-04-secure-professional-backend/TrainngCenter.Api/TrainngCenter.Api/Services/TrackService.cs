@@ -48,7 +48,7 @@ namespace TrainngCenter.Api.Services
 
        public async Task<(bool success, string message)> DeleteAsync(int id)
         {
-            var track = await _context.TrainingTracks.Include(t => t.Enrollments).FirstOrDefaultAsync(t => t.TrainingTrackId == id &&t.IsDeleted);
+            var track = await _context.TrainingTracks.Include(t => t.Enrollments).FirstOrDefaultAsync(t => t.TrainingTrackId == id &&!t.IsDeleted);
             if (track == null)
             {
                 return (false, "Training track not found");
@@ -182,6 +182,35 @@ namespace TrainngCenter.Api.Services
             await _context.SaveChangesAsync();
             return (true, "Training track updated successfully");
         }
+        ```csharp
+public async Task<bool> AssignInstructorAsync(
+    int trackId,
+    int instructorId)
+        {
+            var track = await _context.TrainingTracks
+                .FirstOrDefaultAsync(t =>
+                    t.TrainingTrackId == trackId &&
+                    !t.IsDeleted);
+
+            if (track == null)
+                return false;
+
+            var instructor = await _context.Instructors
+                .FirstOrDefaultAsync(i =>
+                    i.InstructorId == instructorId &&
+                    i.IsActive);
+
+            if (instructor == null)
+                throw new ArgumentException(
+                    "Instructor does not exist or is inactive");
+
+            track.InstructorId = instructorId;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+```
       
     }
 }

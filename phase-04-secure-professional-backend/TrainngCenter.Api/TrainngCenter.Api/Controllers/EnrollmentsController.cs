@@ -1,21 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TrainingCenter.Api.Services.Interfaces;
 using TrainngCenter.Api.DTOs.Enrollments;
+using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Controllers
 {
     [ApiController]
     [Route("api/enrollments")]
+    [Authorize]
     public class EnrollmentsController : ControllerBase
     {
         private readonly IEnrollmentService _service;
+        private readonly ICurrentUserService _currentUserService;
 
-        public EnrollmentsController(IEnrollmentService service)
+        public EnrollmentsController(IEnrollmentService service, ICurrentUserService currentUserService)
         {
             _service = service;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Instructor")]
         public async Task<IActionResult> GetAll(
             [FromQuery] string? status,
             [FromQuery] int? trackId,
@@ -33,13 +39,28 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
-            var result = await _service.GetAllAsync(
-                status,
-                trackId,
-                studentId,
-                paymentStatus,
-                pageNumber,
-                pageSize);
+            if (_currentUserService.Role == "Instructor")
+            {
+                if (!_currentUserService.InstructorId.HasValue)
+                    return Forbid();
+
+                if (!trackId.HasValue)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Instructor must specify a trackId"
+                    });
+                }
+
+                var instructorId =
+                    await _service.GetTrackInstructorIdAsync(trackId.Value);
+
+                if (instructorId != _currentUserService.InstructorId.Value)
+                    return Forbid();
+            }
+
+            var result = await _service.GetAllAsync( status, trackId, studentId, paymentStatus, pageNumber, pageSize);
 
             return Ok(new
             {
@@ -49,6 +70,7 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Instructor,Student")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
@@ -62,6 +84,28 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue ||
+                    result.StudentId != _currentUserService.StudentId.Value)
+                {
+                    return Forbid();
+                }
+            }
+
+            if (_currentUserService.Role == "Instructor")
+            {
+                if (!_currentUserService.InstructorId.HasValue)
+                    return Forbid();
+
+                var instructorId =
+                    await _service.GetTrackInstructorIdAsync(
+                        result.TrainingTrackId);
+
+                if (instructorId != _currentUserService.InstructorId.Value)
+                    return Forbid();
+            }
+
             return Ok(new
             {
                 success = true,
@@ -70,9 +114,19 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> Create(
             [FromBody] CreateEnrollmentRequest request)
         {
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue)
+                    return Forbid();
+
+                if (request.StudentId != _currentUserService.StudentId.Value)
+                    return Forbid();
+            }
+
             try
             {
                 var result = await _service.CreateAsync(request);
@@ -97,6 +151,7 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateStatus(
             int id,
             [FromBody] UpdateEnrollmentStatusRequest request)
@@ -133,8 +188,18 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet("/api/students/{id:int}/enrollments")]
+        [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> GetStudentEnrollments(int id)
         {
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue ||
+                    _currentUserService.StudentId.Value != id)
+                {
+                    return Forbid();
+                }
+            }
+
             var result = await _service.GetStudentEnrollmentsAsync(id);
 
             if (result == null)
@@ -152,7 +217,9 @@ namespace TrainngCenter.Api.Controllers
                 data = result
             });
         }
+
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _service.DeleteAsync(id);

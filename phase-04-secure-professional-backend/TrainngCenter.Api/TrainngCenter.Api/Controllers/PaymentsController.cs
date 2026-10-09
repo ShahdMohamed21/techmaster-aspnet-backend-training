@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TrainingCenter.Api.Entities;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TrainngCenter.Api.DTOs.Payments;
 using TrainngCenter.Api.Services.Interfaces;
 
@@ -7,21 +7,25 @@ namespace TrainngCenter.Api.Controllers
 {
     [ApiController]
     [Route("api/payments")]
+    [Authorize]
     public class PaymentsController : ControllerBase
     {
         private readonly IPaymentService _service;
+        private readonly ICurrentUserService _currentUserService;
 
-        public PaymentsController(IPaymentService service)
+        public PaymentsController(IPaymentService service,ICurrentUserService currentUserService)
         {
             _service = service;
+            _currentUserService = currentUserService;
         }
-
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate, [FromQuery] string? status)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] DateTime? fromDate,
+            [FromQuery] DateTime? toDate,
+            [FromQuery] string? status)
         {
-            if (fromDate.HasValue &&
-                toDate.HasValue &&
-                fromDate > toDate)
+            if (fromDate.HasValue && toDate.HasValue &&fromDate > toDate)
             {
                 return BadRequest(new
                 {
@@ -30,10 +34,7 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
-            var result = await _service.GetAllAsync(
-                fromDate,
-                toDate,
-                status);
+            var result = await _service.GetAllAsync(fromDate, toDate,status);
 
             return Ok(new
             {
@@ -43,6 +44,7 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
@@ -55,6 +57,17 @@ namespace TrainngCenter.Api.Controllers
                     message = "Payment was not found"
                 });
             }
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue)
+                    return Forbid();
+
+                var studentId =
+                    await _service.GetPaymentStudentIdAsync(id);
+
+                if (studentId != _currentUserService.StudentId.Value)
+                    return Forbid();
+            }
 
             return Ok(new
             {
@@ -62,10 +75,25 @@ namespace TrainngCenter.Api.Controllers
                 data = result
             });
         }
-
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePaymentRequest request)
+        [Authorize(Roles = "Admin,Student")]
+        public async Task<IActionResult> Create(
+            [FromBody] CreatePaymentRequest request)
         {
+
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue)
+                    return Forbid();
+
+                var studentId =
+                    await _service.GetEnrollmentStudentIdAsync(
+                        request.EnrollmentId);
+
+                if (studentId != _currentUserService.StudentId.Value)
+                    return Forbid();
+            }
+
             try
             {
                 var result = await _service.CreateAsync(request);
@@ -89,12 +117,28 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
+
         [HttpGet("~/api/enrollments/{id:int}/payments")]
+        [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> GetEnrollmentPayments(int id)
         {
+
+            if (_currentUserService.Role == "Student")
+            {
+                if (!_currentUserService.StudentId.HasValue)
+                    return Forbid();
+
+                var studentId =
+                    await _service.GetEnrollmentStudentIdAsync(id);
+
+                if (studentId != _currentUserService.StudentId.Value)
+                    return Forbid();
+            }
+
             try
             {
-                var result = await _service.GetEnrollmentPaymentsAsync(id);
+                var result =
+                    await _service.GetEnrollmentPaymentsAsync(id);
 
                 return Ok(new
                 {
@@ -111,8 +155,8 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
         }
-
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateStatus(
             int id,
             [FromBody] UpdatePaymentStatusRequest request)
@@ -149,5 +193,3 @@ namespace TrainngCenter.Api.Controllers
         }
     }
 }
-
-

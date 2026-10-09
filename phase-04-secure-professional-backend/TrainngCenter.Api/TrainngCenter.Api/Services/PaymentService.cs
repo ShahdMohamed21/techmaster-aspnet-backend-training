@@ -156,6 +156,23 @@ namespace TrainngCenter.Api.Services
 
             return true;
         }
+        public async Task<int?> GetPaymentStudentIdAsync(int paymentId)
+        {
+            return await _context.Payments
+                .AsNoTracking()
+                .Where(p => p.PaymentId == paymentId)
+                .Select(p => (int?)p.Enrollment.StudentId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<int?> GetEnrollmentStudentIdAsync(int enrollmentId)
+        {
+            return await _context.Enrollments
+                .AsNoTracking()
+                .Where(e => e.EnrollmentId == enrollmentId && !e.IsDeleted)
+                .Select(e => (int?)e.StudentId)
+                .FirstOrDefaultAsync();
+        }
     }
 }
 

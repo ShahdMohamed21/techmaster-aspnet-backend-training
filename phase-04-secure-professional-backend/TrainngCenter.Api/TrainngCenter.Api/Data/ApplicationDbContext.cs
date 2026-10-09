@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TrainingCenter.Api.Entities;
+using TrainngCenter.Api.Entities;
 
 namespace TrainingCenter.Api.Data
 {
@@ -24,5 +25,6 @@ namespace TrainingCenter.Api.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
     }
 }

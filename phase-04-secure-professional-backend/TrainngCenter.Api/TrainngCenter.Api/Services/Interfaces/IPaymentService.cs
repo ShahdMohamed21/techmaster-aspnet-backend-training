@@ -5,22 +5,18 @@ namespace TrainngCenter.Api.Services.Interfaces
     public interface IPaymentService
     {
        
-            Task<List<PaymentResponse>> GetAllAsync(
-                DateTime? fromDate,
-                DateTime? toDate,
-                string? status);
+            Task<List<PaymentResponse>> GetAllAsync( DateTime? fromDate, DateTime? toDate, string? status);
 
             Task<PaymentResponse?> GetByIdAsync(int id);
 
-            Task<PaymentResponse> CreateAsync(
-                CreatePaymentRequest request);
+            Task<PaymentResponse> CreateAsync(CreatePaymentRequest request);
 
-            Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync(
-                int enrollmentId);
+            Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync(int enrollmentId);
 
-            Task<bool> UpdateStatusAsync(
-                int id,
-                string status);
-        
+            Task<bool> UpdateStatusAsync(int id, string status);
+            Task<int?> GetPaymentStudentIdAsync(int paymentId);
+
+            Task<int?> GetEnrollmentStudentIdAsync(int enrollmentId);
+
     }
 }
