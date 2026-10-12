@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using TrainngCenter.Api.Middleware;
 
 namespace TrainingCenter.Api
 {
@@ -129,6 +130,7 @@ namespace TrainingCenter.Api
 
 
             app.UseHttpsRedirection();
+            app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.UseAuthentication();
 
