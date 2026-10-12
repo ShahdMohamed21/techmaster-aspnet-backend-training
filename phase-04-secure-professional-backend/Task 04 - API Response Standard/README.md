@@ -19,10 +19,7 @@ TrainingCenter.Api/
 ├── Common/
 │   └── Responses/
 │       └── ApiResponse.cs
-├── Helpers/
-├── Extensions/
-├── Constants/
-└── Validators/
+
 ```
 
 ## Architecture Responsibilities
