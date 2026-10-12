@@ -18,14 +18,14 @@ namespace TrainngCenter.Api.Controllers
             _service = service;
             _currentUserService = currentUserService;
         }
+
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] DateTime? fromDate,
-            [FromQuery] DateTime? toDate,
-            [FromQuery] string? status)
+        public async Task<IActionResult> GetAll([FromQuery] DateTime? fromDate,[FromQuery] DateTime? toDate,[FromQuery] string? status)
         {
-            if (fromDate.HasValue && toDate.HasValue &&fromDate > toDate)
+            if (fromDate.HasValue &&
+                toDate.HasValue &&
+                fromDate.Value > toDate.Value)
             {
                 return BadRequest(new
                 {
@@ -34,14 +34,27 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
-            var result = await _service.GetAllAsync(fromDate, toDate,status);
-
-            return Ok(new
+            try
             {
-                success = true,
-                data = result
-            });
+                var result = await _service.GetAllAsync(
+                    fromDate, toDate, status);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
         }
+
 
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin,Student")]
@@ -75,27 +88,35 @@ namespace TrainngCenter.Api.Controllers
                 data = result
             });
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin,Student")]
-        public async Task<IActionResult> Create(
-            [FromBody] CreatePaymentRequest request)
+        public async Task<IActionResult> Create([FromBody] CreatePaymentRequest request)
         {
-
-            if (_currentUserService.Role == "Student")
-            {
-                if (!_currentUserService.StudentId.HasValue)
-                    return Forbid();
-
-                var studentId =
-                    await _service.GetEnrollmentStudentIdAsync(
-                        request.EnrollmentId);
-
-                if (studentId != _currentUserService.StudentId.Value)
-                    return Forbid();
-            }
-
             try
             {
+                if (_currentUserService.Role == "Student")
+                {
+                    if (!_currentUserService.StudentId.HasValue)
+                        return Forbid();
+
+                    var studentId =await _service.GetEnrollmentStudentIdAsync( request.EnrollmentId);
+
+                    if (!studentId.HasValue)
+                    {
+                        return NotFound(new
+                        {
+                            success = false,
+                            message = "Enrollment was not found"
+                        });
+                    }
+
+                    if (studentId.Value !=_currentUserService.StudentId.Value)
+                    {
+                        return Forbid();
+                    }
+                }
+
                 var result = await _service.CreateAsync(request);
 
                 return CreatedAtAction(
@@ -116,6 +137,7 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
         }
+
 
 
         [HttpGet("~/api/enrollments/{id:int}/payments")]

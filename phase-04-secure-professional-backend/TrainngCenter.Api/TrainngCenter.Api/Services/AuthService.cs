@@ -18,19 +18,31 @@ namespace TrainingCenter.Api.Services
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly PasswordHasher<ApplicationUser> _passwordHasher;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(
-            ApplicationDbContext context,
-            IConfiguration configuration)
+        public AuthService(ApplicationDbContext context,IConfiguration configuration,ILogger<AuthService> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
             _passwordHasher = new PasswordHasher<ApplicationUser>();
         }
 
         public async Task<(bool Success, string Message, AuthResponse? Data)> RegisterAsync(
             RegisterRequest request)
         {
+            if (request == null)
+                return (false, "Invalid registration request", null);
+
+            if (string.IsNullOrWhiteSpace(request.FullName))
+                return (false, "Full name is required", null);
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+                return (false, "Email is required", null);
+
+            if (string.IsNullOrWhiteSpace(request.Password))
+                return (false, "Password is required", null);
+
             if (!request.Password.Equals(
                     request.ConfirmPassword,
                     StringComparison.Ordinal))
@@ -41,7 +53,8 @@ namespace TrainingCenter.Api.Services
             if (!Enum.TryParse<UserRole>(
                     request.Role,
                     true,
-                    out var role))
+                    out var role) ||
+                !Enum.IsDefined(typeof(UserRole), role))
             {
                 return (false, "Invalid role", null);
             }
@@ -113,6 +126,11 @@ namespace TrainingCenter.Api.Services
 
                 await transaction.CommitAsync();
 
+                _logger.LogInformation(
+                    "User registered successfully. UserId: {UserId}, Role: {Role}",
+                    user.Id,
+                    user.Role);
+
                 return (
                     true,
                     "User registered successfully",
@@ -124,20 +142,33 @@ namespace TrainingCenter.Api.Services
                         Role = user.Role.ToString()
                     });
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
 
-                return (
-                    false,
-                    "Registration failed",
-                    null);
+                _logger.LogError(
+                    ex,
+                    "An unexpected error occurred during user registration.");
+
+                throw;
             }
         }
 
-        public async Task<(bool Success, string Message, AuthResponse? Data)> LoginAsync(
-            LoginRequest request)
+        public async Task<(bool Success, string Message, AuthResponse? Data)> LoginAsync(LoginRequest request)
         {
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.Email) ||
+                string.IsNullOrWhiteSpace(request.Password))
+            {
+                _logger.LogWarning(
+                    "Login failed because required credentials were missing");
+
+                return (
+                    false,
+                    "Email and password are required",
+                    null);
+            }
+
             var email = request.Email.Trim().ToLowerInvariant();
 
             var user = await _context.ApplicationUsers
@@ -145,6 +176,9 @@ namespace TrainingCenter.Api.Services
 
             if (user == null)
             {
+                _logger.LogWarning(
+                    "Login failed because the user was not found.");
+
                 return (
                     false,
                     "Invalid email or password",
@@ -153,6 +187,10 @@ namespace TrainingCenter.Api.Services
 
             if (!user.IsActive)
             {
+                _logger.LogWarning(
+                    "Login failed because the account is inactive. UserId: {UserId}",
+                    user.Id);
+
                 return (
                     false,
                     "User account is inactive",
@@ -167,6 +205,10 @@ namespace TrainingCenter.Api.Services
 
             if (verification == PasswordVerificationResult.Failed)
             {
+                _logger.LogWarning(
+                    "Login failed because the password was incorrect. UserId: {UserId}",
+                    user.Id);
+
                 return (
                     false,
                     "Invalid email or password",
@@ -177,7 +219,6 @@ namespace TrainingCenter.Api.Services
             user.UpdatedAt = DateTime.UtcNow;
 
             var accessToken = GenerateAccessToken(user);
-
             var refreshToken = GenerateRefreshToken();
 
             var refreshTokenEntity = new RefreshToken
@@ -192,6 +233,10 @@ namespace TrainingCenter.Api.Services
             _context.RefreshTokens.Add(refreshTokenEntity);
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "User logged in successfully. UserId: {UserId}",
+                user.Id);
 
             return (
                 true,
@@ -208,8 +253,7 @@ namespace TrainingCenter.Api.Services
                 });
         }
 
-        public async Task<CurrentUserResponse?> GetCurrentUserAsync(
-            ClaimsPrincipal principal)
+        public async Task<CurrentUserResponse?> GetCurrentUserAsync(ClaimsPrincipal principal)
         {
             var userId = GetUserId(principal);
 
@@ -218,7 +262,7 @@ namespace TrainingCenter.Api.Services
 
             var user = await _context.ApplicationUsers
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == userId);
+                .FirstOrDefaultAsync(x => x.Id == userId.Value);
 
             if (user == null)
                 return null;
@@ -234,31 +278,33 @@ namespace TrainingCenter.Api.Services
             };
         }
 
-        public async Task<(bool Success, string Message)> ChangePasswordAsync(
-            ClaimsPrincipal principal,
-            ChangePasswordRequest request)
+        public async Task<(bool Success, string Message)> ChangePasswordAsync(ClaimsPrincipal principal, ChangePasswordRequest request)
         {
             var userId = GetUserId(principal);
 
             if (userId == null)
                 return (false, "Invalid user");
 
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+                string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return (false, "Password fields are required");
+            }
+
             if (!request.NewPassword.Equals(
                     request.ConfirmNewPassword,
                     StringComparison.Ordinal))
             {
                 return (
-                    false,
-                    "Passwords do not match");
+                    false,"Passwords do not match");
             }
 
             var user = await _context.ApplicationUsers
-                .FirstOrDefaultAsync(x => x.Id == userId);
+                .FirstOrDefaultAsync(x => x.Id == userId.Value);
 
             if (user == null)
-                return (
-                    false,
-                    "User not found");
+                return (false, "User not found");
 
             var verification =
                 _passwordHasher.VerifyHashedPassword(
@@ -268,9 +314,24 @@ namespace TrainingCenter.Api.Services
 
             if (verification == PasswordVerificationResult.Failed)
             {
+                _logger.LogWarning(
+                    "Password change failed because the current password was incorrect. UserId: {UserId}",
+                    user.Id);
+
                 return (
                     false,
                     "Current password is incorrect");
+            }
+
+            if (request.NewPassword.Length < 8 ||
+                !request.NewPassword.Any(char.IsUpper) ||
+                !request.NewPassword.Any(char.IsLower) ||
+                !request.NewPassword.Any(char.IsDigit) ||
+                !request.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                return (
+                    false,
+                    "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character");
             }
 
             user.PasswordHash =
@@ -282,6 +343,10 @@ namespace TrainingCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "Password changed successfully. UserId: {UserId}",
+                user.Id);
+
             return (
                 true,
                 "Password changed successfully");
@@ -290,6 +355,15 @@ namespace TrainingCenter.Api.Services
         public async Task<(bool Success, string Message, AuthResponse? Data)> RefreshTokenAsync(
             RefreshTokenRequest request)
         {
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return (
+                    false,
+                    "Refresh token is required",
+                    null);
+            }
+
             var tokenHash = HashToken(request.RefreshToken);
 
             var storedToken = await _context.RefreshTokens
@@ -299,6 +373,9 @@ namespace TrainingCenter.Api.Services
 
             if (storedToken == null)
             {
+                _logger.LogWarning(
+                    "Token refresh failed because the token was invalid.");
+
                 return (
                     false,
                     "Invalid refresh token",
@@ -307,6 +384,10 @@ namespace TrainingCenter.Api.Services
 
             if (storedToken.RevokedAt != null)
             {
+                _logger.LogWarning(
+                    "Token refresh failed because the token was revoked. UserId: {UserId}",
+                    storedToken.UserId);
+
                 return (
                     false,
                     "Refresh token has been revoked",
@@ -334,8 +415,7 @@ namespace TrainingCenter.Api.Services
             var accessToken =
                 GenerateAccessToken(storedToken.User);
 
-            var newRefreshToken =
-                GenerateRefreshToken();
+            var newRefreshToken = GenerateRefreshToken();
 
             _context.RefreshTokens.Add(
                 new RefreshToken
@@ -348,6 +428,10 @@ namespace TrainingCenter.Api.Services
                 });
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Refresh token rotated successfully. UserId: {UserId}",
+                storedToken.UserId);
 
             return (
                 true,
@@ -364,23 +448,24 @@ namespace TrainingCenter.Api.Services
                 });
         }
 
-        public async Task<(bool Success, string Message)> LogoutAsync(
-            ClaimsPrincipal principal,
-            LogoutRequest request)
+        public async Task<(bool Success, string Message)> LogoutAsync(ClaimsPrincipal principal,LogoutRequest request)
         {
             var userId = GetUserId(principal);
 
             if (userId == null)
-                return (
-                    false,
-                    "Invalid user");
+                return (false, "Invalid user");
 
-            var tokenHash =
-                HashToken(request.RefreshToken);
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return (false, "Refresh token is required");
+            }
+
+            var tokenHash = HashToken(request.RefreshToken);
 
             var token = await _context.RefreshTokens
                 .FirstOrDefaultAsync(
-                    x => x.UserId == userId &&
+                    x => x.UserId == userId.Value &&
                          x.TokenHash == tokenHash);
 
             if (token == null)
@@ -390,17 +475,27 @@ namespace TrainingCenter.Api.Services
                     "Refresh token not found");
             }
 
+            if (token.RevokedAt != null)
+            {
+                return (
+                    false,
+                    "Refresh token has already been revoked");
+            }
+
             token.RevokedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "User logged out successfully. UserId: {UserId}",
+                userId.Value);
 
             return (
                 true,
                 "Logged out successfully");
         }
 
-        private (string Token, DateTime ExpiresAt) GenerateAccessToken(
-            ApplicationUser user)
+        private (string Token, DateTime ExpiresAt) GenerateAccessToken(ApplicationUser user)
         {
             var key = _configuration["Jwt:Key"];
 
@@ -410,9 +505,8 @@ namespace TrainingCenter.Api.Services
                     "JWT key is not configured");
             }
 
-            var expiresAt =
-                DateTime.UtcNow.AddMinutes(
-                    GetAccessTokenMinutes());
+            var expiresAt = DateTime.UtcNow.AddMinutes(
+                GetAccessTokenMinutes());
 
             var claims = new List<Claim>
             {
@@ -457,14 +551,12 @@ namespace TrainingCenter.Api.Services
                         user.InstructorId.Value.ToString()));
             }
 
-            var securityKey =
-                new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(key));
+            var securityKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(key));
 
-            var credentials =
-                new SigningCredentials(
-                    securityKey,
-                    SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(
+                securityKey,
+                SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
@@ -474,43 +566,38 @@ namespace TrainingCenter.Api.Services
                 signingCredentials: credentials);
 
             return (
-                new JwtSecurityTokenHandler()
-                    .WriteToken(token),
+                new JwtSecurityTokenHandler().WriteToken(token),
                 expiresAt);
         }
 
         private static string GenerateRefreshToken()
         {
-            var bytes =
-                RandomNumberGenerator.GetBytes(64);
-
+            var bytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(bytes);
         }
 
         private static string HashToken(string token)
         {
-            var bytes =
-                SHA256.HashData(
-                    Encoding.UTF8.GetBytes(token));
+            var bytes = SHA256.HashData(
+                Encoding.UTF8.GetBytes(token));
 
             return Convert.ToHexString(bytes);
         }
 
-        private static int GetUserId(
-            ClaimsPrincipal principal)
+        private static int? GetUserId(ClaimsPrincipal principal)
         {
             var claim =
-                principal.FindFirst(
-                    ClaimTypes.NameIdentifier)
-                ?? principal.FindFirst(
-                    JwtRegisteredClaimNames.Sub);
+                principal.FindFirst(ClaimTypes.NameIdentifier)
+                ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
 
-            return claim != null &&
-                   int.TryParse(
-                       claim.Value,
-                       out var id)
-                ? id
-                : 0;
+            if (claim == null ||
+                !int.TryParse(claim.Value, out var id) ||
+                id <= 0)
+            {
+                return null;
+            }
+
+            return id;
         }
 
         private int GetAccessTokenMinutes()

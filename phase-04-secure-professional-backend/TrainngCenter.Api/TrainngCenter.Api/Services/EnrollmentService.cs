@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.Entities;
 using TrainingCenter.Api.Services.Interfaces;
@@ -10,40 +11,71 @@ namespace TrainngCenter.Api.Services
     public class EnrollmentService : IEnrollmentService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<EnrollmentService> _logger;
 
-        public EnrollmentService(ApplicationDbContext context)
+        public EnrollmentService(ApplicationDbContext context,ILogger<EnrollmentService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        public async Task<PagedEnrollmentResponse> GetAllAsync(string? status,int? trackId,int? studentId,string? paymentStatus, int pageNumber,int pageSize)
+        private static bool IsOccupyingSeat(Enrollment enrollment)
         {
+            return !enrollment.IsDeleted &&
+                   (enrollment.Status == "Active" ||
+                    enrollment.Status == "Pending");
+        }
+
+        public async Task<PagedEnrollmentResponse> GetAllAsync(string? status,int? trackId,int? studentId,string? paymentStatus,int pageNumber,int pageSize)
+        {
+            if (pageNumber <= 0 || pageSize <= 0 || pageSize > 100)
+            {
+                throw new ArgumentException(
+                    "Page number must be greater than zero and page size must be between 1 and 100");
+            }
+
             var query = _context.Enrollments
                 .AsNoTracking()
-                .Where(e => !e.IsDeleted);
+                .Where(e =>
+                    !e.IsDeleted &&
+                    !e.Student.IsDeleted &&
+                    !e.TrainingTrack.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(e => e.Status == status);
+                var normalizedStatus = status.Trim();
+
+                query = query.Where(e =>
+                    e.Status == normalizedStatus);
             }
 
             if (trackId.HasValue)
             {
+                if (trackId.Value <= 0)
+                    throw new ArgumentException(
+                        "Track ID must be greater than zero.");
+
                 query = query.Where(e =>
                     e.TrainingTrackId == trackId.Value);
             }
 
             if (studentId.HasValue)
             {
+                if (studentId.Value <= 0)
+                    throw new ArgumentException(
+                        "Student ID must be greater than zero.");
+
                 query = query.Where(e =>
                     e.StudentId == studentId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(paymentStatus))
             {
+                var normalizedPaymentStatus = paymentStatus.Trim();
+
                 query = query.Where(e =>
                     e.Payments.Any(p =>
-                        p.PaymentStatus == paymentStatus));
+                        p.PaymentStatus == normalizedPaymentStatus));
             }
 
             var totalCount = await query.CountAsync();
@@ -75,10 +107,16 @@ namespace TrainngCenter.Api.Services
 
         public async Task<EnrollmentDetailsResponse?> GetByIdAsync(int id)
         {
+            if (id <= 0)
+                return null;
+
             var enrollment = await _context.Enrollments
                 .AsNoTracking()
-                .Where(e => !e.IsDeleted)
-                .Where(e => e.EnrollmentId == id)
+                .Where(e =>
+                    !e.IsDeleted &&
+                    !e.Student.IsDeleted &&
+                    !e.TrainingTrack.IsDeleted &&
+                    e.EnrollmentId == id)
                 .Select(e => new EnrollmentDetailsResponse
                 {
                     EnrollmentId = e.EnrollmentId,
@@ -95,17 +133,18 @@ namespace TrainngCenter.Api.Services
                     FinalResult = e.FinalResult,
 
                     Payments = e.Payments
-                        .Select(p => new TrainngCenter.Api.DTOs.Payments.PaymentResponse
-                        {
-                            PaymentId = p.PaymentId,
-                            EnrollmentId = p.EnrollmentId,
-                            Amount = p.Amount,
-                            PaymentMethod = p.PaymentMethod,
-                            PaymentDate = p.PaymentDate,
-                            PaymentStatus = p.PaymentStatus,
-                            ReferenceNumber = p.ReferenceNumber,
-                            Notes = p.Notes
-                        })
+                        .Select(p =>
+                            new TrainngCenter.Api.DTOs.Payments.PaymentResponse
+                            {
+                                PaymentId = p.PaymentId,
+                                EnrollmentId = p.EnrollmentId,
+                                Amount = p.Amount,
+                                PaymentMethod = p.PaymentMethod,
+                                PaymentDate = p.PaymentDate,
+                                PaymentStatus = p.PaymentStatus,
+                                ReferenceNumber = p.ReferenceNumber,
+                                Notes = p.Notes
+                            })
                         .ToList()
                 })
                 .FirstOrDefaultAsync();
@@ -115,6 +154,17 @@ namespace TrainngCenter.Api.Services
 
         public async Task<EnrollmentDetailsResponse> CreateAsync(CreateEnrollmentRequest request)
         {
+            if (request == null)
+                throw new ArgumentException("Request is required.");
+
+            if (request.StudentId <= 0)
+                throw new ArgumentException(
+                    "Student ID must be greater than zero.");
+
+            if (request.TrainingTrackId <= 0)
+                throw new ArgumentException(
+                    "Training track ID must be greater than zero.");
+
             var student = await _context.Students
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s =>
@@ -124,8 +174,12 @@ namespace TrainngCenter.Api.Services
 
             if (student == null)
             {
+                _logger.LogWarning(
+                    "Enrollment creation failed: student {StudentId} was not found or is inactive",
+                    request.StudentId);
+
                 throw new ArgumentException(
-                    "Student does not exist, is inactive, or has been deleted");
+                    "Student does not exist, is inactive, or has been deleted.");
             }
 
             var track = await _context.TrainingTracks
@@ -136,14 +190,18 @@ namespace TrainngCenter.Api.Services
 
             if (track == null)
             {
+                _logger.LogWarning(
+                    "Enrollment creation failed: track {TrackId} was not found",
+                    request.TrainingTrackId);
+
                 throw new ArgumentException(
-                    "Training track was not found");
+                    "Training track was not found.");
             }
 
             if (track.Status != "Open")
             {
                 throw new ArgumentException(
-                    "Enrollment is allowed only for open tracks");
+                    "Enrollment is allowed only for open tracks.");
             }
 
             var alreadyEnrolled = await _context.Enrollments
@@ -155,20 +213,30 @@ namespace TrainngCenter.Api.Services
 
             if (alreadyEnrolled)
             {
+                _logger.LogWarning(
+                    "Enrollment creation rejected because an existing enrollment was found for student {StudentId} and track {TrackId}",
+                    request.StudentId,
+                    request.TrainingTrackId);
+
                 throw new ArgumentException(
-                    "This student is already enrolled in this track");
+                    "This student is already enrolled in this track.");
             }
 
-            var activeEnrollments = await _context.Enrollments
+            var enrolledCount = await _context.Enrollments
                 .CountAsync(e =>
                     e.TrainingTrackId == request.TrainingTrackId &&
                     !e.IsDeleted &&
-                    e.Status == "Active");
+                    (e.Status == "Active" ||
+                     e.Status == "Pending"));
 
-            if (activeEnrollments >= track.Capacity)
+            if (enrolledCount >= track.Capacity)
             {
+                _logger.LogWarning(
+                    "Enrollment creation rejected because track {TrackId} has reached capacity",
+                    request.TrainingTrackId);
+
                 throw new ArgumentException(
-                    "The training track has reached its capacity");
+                    "The training track has reached its capacity.");
             }
 
             var enrollment = new Enrollment
@@ -186,12 +254,28 @@ namespace TrainngCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
-            return (await GetByIdAsync(enrollment.EnrollmentId))!;
+            _logger.LogInformation(
+                "Enrollment {EnrollmentId} created successfully for track {TrackId}",
+                enrollment.EnrollmentId,
+                enrollment.TrainingTrackId);
+
+            var result = await GetByIdAsync(enrollment.EnrollmentId);
+
+            if (result == null)
+            {
+                throw new InvalidOperationException(
+                    "Enrollment was created but could not be retrieved.");
+            }
+
+            return result;
         }
 
         public async Task<List<EnrollmentListItemResponse>?>
             GetStudentEnrollmentsAsync(int studentId)
         {
+            if (studentId <= 0)
+                return null;
+
             var studentExists = await _context.Students
                 .AsNoTracking()
                 .AnyAsync(s =>
@@ -199,15 +283,14 @@ namespace TrainngCenter.Api.Services
                     !s.IsDeleted);
 
             if (!studentExists)
-            {
                 return null;
-            }
 
             var enrollments = await _context.Enrollments
                 .AsNoTracking()
                 .Where(e =>
                     e.StudentId == studentId &&
-                    !e.IsDeleted)
+                    !e.IsDeleted &&
+                    !e.TrainingTrack.IsDeleted)
                 .OrderBy(e => e.EnrollmentId)
                 .Select(e => new EnrollmentListItemResponse
                 {
@@ -226,11 +309,16 @@ namespace TrainngCenter.Api.Services
 
         public async Task<List<TrackStudentResponse>> GetTrackStudentsAsync(int trackId)
         {
+            if (trackId <= 0)
+                throw new ArgumentException(
+                    "Track ID must be greater than zero.");
+
             var students = await _context.Enrollments
                 .AsNoTracking()
                 .Where(e =>
                     e.TrainingTrackId == trackId &&
-                    !e.IsDeleted)
+                    !e.IsDeleted &&
+                    !e.Student.IsDeleted)
                 .Select(e => new TrackStudentResponse
                 {
                     StudentId = e.Student.StudentId,
@@ -245,8 +333,25 @@ namespace TrainngCenter.Api.Services
             return students;
         }
 
-        public async Task<bool> UpdateStatusAsync( int id, string status)
+        public async Task<bool> UpdateStatusAsync(int id,string status)
         {
+            if (id <= 0)
+                throw new ArgumentException(
+                    "Enrollment ID must be greater than zero.");
+
+            if (string.IsNullOrWhiteSpace(status))
+                throw new ArgumentException(
+                    "Enrollment status is required.");
+
+            var normalizedStatus = status.Trim();
+
+            if (normalizedStatus != "Completed" &&
+                normalizedStatus != "Cancelled")
+            {
+                throw new ArgumentException(
+                    "Status must be Completed or Cancelled.");
+            }
+
             var enrollment = await _context.Enrollments
                 .FirstOrDefaultAsync(e =>
                     e.EnrollmentId == id &&
@@ -254,25 +359,34 @@ namespace TrainngCenter.Api.Services
 
             if (enrollment == null)
             {
+                _logger.LogWarning(
+                    "Enrollment status update failed: enrollment {EnrollmentId} was not found",
+                    id);
+
                 return false;
             }
 
-            if (status != "Completed" &&
-                status != "Cancelled")
-            {
-                throw new ArgumentException(
-                    "Status must be Completed or Cancelled");
-            }
+            var oldStatus = enrollment.Status;
 
-            enrollment.Status = status;
+            enrollment.Status = normalizedStatus;
             enrollment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "Enrollment {EnrollmentId} status changed from {OldStatus} to {NewStatus}",
+                enrollment.EnrollmentId,
+                oldStatus,
+                normalizedStatus);
+
             return true;
         }
+
         public async Task<bool> DeleteAsync(int id)
         {
+            if (id <= 0)
+                return false;
+
             var enrollment = await _context.Enrollments
                 .FirstOrDefaultAsync(e =>
                     e.EnrollmentId == id &&
@@ -280,6 +394,10 @@ namespace TrainngCenter.Api.Services
 
             if (enrollment == null)
             {
+                _logger.LogWarning(
+                    "Enrollment deletion failed: enrollment {EnrollmentId} was not found",
+                    id);
+
                 return false;
             }
 
@@ -289,13 +407,23 @@ namespace TrainngCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "Enrollment {EnrollmentId} soft-deleted successfully",
+                enrollment.EnrollmentId);
+
             return true;
         }
+
         public async Task<int?> GetTrackInstructorIdAsync(int trackId)
         {
+            if (trackId <= 0)
+                return null;
+
             return await _context.TrainingTracks
                 .AsNoTracking()
-                .Where(t => t.TrainingTrackId == trackId && !t.IsDeleted)
+                .Where(t =>
+                    t.TrainingTrackId == trackId &&
+                    !t.IsDeleted)
                 .Select(t => (int?)t.InstructorId)
                 .FirstOrDefaultAsync();
         }

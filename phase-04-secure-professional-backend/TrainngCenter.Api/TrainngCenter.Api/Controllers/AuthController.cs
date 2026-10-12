@@ -18,12 +18,22 @@ namespace TrainingCenter.Api.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> Register(RegisterRequest request)
+        public async Task<IActionResult> Register(
+            [FromBody] RegisterRequest request)
         {
-            var result =await _authService.RegisterAsync(request);
+            var result = await _authService.RegisterAsync(request);
 
             if (!result.Success)
             {
+                if (result.Message == "Email is already registered")
+                {
+                    return Conflict(new
+                    {
+                        success = false,
+                        message = result.Message
+                    });
+                }
+
                 return BadRequest(new
                 {
                     success = false,
@@ -47,9 +57,9 @@ namespace TrainingCenter.Api.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login(LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var result =await _authService.LoginAsync(request);
+            var result = await _authService.LoginAsync(request);
 
             if (!result.Success)
             {
@@ -72,7 +82,7 @@ namespace TrainingCenter.Api.Controllers
         [Authorize]
         public async Task<IActionResult> Me()
         {
-            var result =await _authService.GetCurrentUserAsync(User);
+            var result = await _authService.GetCurrentUserAsync(User);
 
             if (result == null)
             {
@@ -92,12 +102,24 @@ namespace TrainingCenter.Api.Controllers
 
         [HttpPost("change-password")]
         [Authorize]
-        public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+        public async Task<IActionResult> ChangePassword(
+            [FromBody] ChangePasswordRequest request)
         {
-            var result =await _authService.ChangePasswordAsync(User,request);
+            var result = await _authService.ChangePasswordAsync(
+                User,
+                request);
 
             if (!result.Success)
             {
+                if (result.Message == "User not found")
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = result.Message
+                    });
+                }
+
                 return BadRequest(new
                 {
                     success = false,
@@ -114,9 +136,10 @@ namespace TrainingCenter.Api.Controllers
 
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<IActionResult> RefreshToken(RefreshTokenRequest request)
+        public async Task<IActionResult> RefreshToken(
+            [FromBody] RefreshTokenRequest request)
         {
-            var result = await _authService.RefreshTokenAsync( request);
+            var result = await _authService.RefreshTokenAsync(request);
 
             if (!result.Success)
             {
@@ -137,9 +160,10 @@ namespace TrainingCenter.Api.Controllers
 
         [HttpPost("logout")]
         [Authorize]
-        public async Task<IActionResult> Logout(LogoutRequest request)
+        public async Task<IActionResult> Logout(
+            [FromBody] LogoutRequest request)
         {
-            var result =await _authService.LogoutAsync(User, request);
+            var result = await _authService.LogoutAsync(User,request);
 
             if (!result.Success)
             {

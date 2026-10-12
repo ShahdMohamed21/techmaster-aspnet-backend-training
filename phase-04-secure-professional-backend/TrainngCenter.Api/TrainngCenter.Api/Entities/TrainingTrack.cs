@@ -26,7 +26,6 @@
 
         public bool IsDeleted { get; set; } = false;
 
-        // Navigation Properties
 
         public Instructor Instructor { get; set; } = null!;
 

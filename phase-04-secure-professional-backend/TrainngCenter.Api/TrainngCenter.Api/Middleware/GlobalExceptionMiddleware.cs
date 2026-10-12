@@ -1,5 +1,4 @@
-﻿
-using System.Text.Json;
+﻿using System.Text.Json;
 using TrainngCenter.Api.Common.Responses;
 
 namespace TrainngCenter.Api.Middleware
@@ -9,9 +8,7 @@ namespace TrainngCenter.Api.Middleware
         private readonly RequestDelegate _next;
         private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
-        public GlobalExceptionMiddleware(
-            RequestDelegate next,
-            ILogger<GlobalExceptionMiddleware> logger)
+        public GlobalExceptionMiddleware(RequestDelegate next,ILogger<GlobalExceptionMiddleware> logger)
         {
             _next = next;
             _logger = logger;
@@ -23,11 +20,19 @@ namespace TrainngCenter.Api.Middleware
             {
                 await _next(context);
             }
+            catch (OperationCanceledException)
+                when (context.RequestAborted.IsCancellationRequested)
+            {
+
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "An unexpected error occurred while processing the request.");
+                    "Unhandled exception. TraceId: {TraceId}, Path: {Path}",
+                    context.TraceIdentifier,
+                    context.Request.Path);
 
                 if (context.Response.HasStarted)
                 {
@@ -40,16 +45,19 @@ namespace TrainngCenter.Api.Middleware
 
                 context.Response.ContentType = "application/json";
 
-                var response =
-                    ApiResponse<object>.FailureResponse(
-                        "An unexpected error occurred.",
-                        new List<string>
-                        {
-                            "Please try again later."
-                        });
+                var response = ApiResponse<object>.FailureResponse(
+                    "An unexpected error occurred.",
+                    new List<string>
+                    {
+                        "Please try again later.",
+                        $"Trace ID: {context.TraceIdentifier}"
+                    });
+
+                var json = JsonSerializer.Serialize(response);
 
                 await context.Response.WriteAsync(
-                    JsonSerializer.Serialize(response));
+                    json,
+                    context.RequestAborted);
             }
         }
     }

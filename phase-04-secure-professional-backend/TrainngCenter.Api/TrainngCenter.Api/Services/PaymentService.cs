@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.Entities;
 using TrainngCenter.Api.DTOs.Payments;
@@ -7,29 +9,36 @@ using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Services
 {
-
     public class PaymentService : IPaymentService
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService( ApplicationDbContext context,IMapper mapper)
+        public PaymentService(ApplicationDbContext context,IMapper mapper,ILogger<PaymentService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
-        public async Task<List<PaymentResponse>> GetAllAsync(DateTime? fromDate, DateTime? toDate, string? status)
+        public async Task<List<PaymentResponse>> GetAllAsync(DateTime? fromDate,DateTime? toDate, string? status)
         {
             var query = _context.Payments
                 .AsNoTracking()
                 .AsQueryable();
 
-            if (fromDate.HasValue)
+            if (fromDate.HasValue && toDate.HasValue
+                && fromDate.Value > toDate.Value)
             {
-                query = query.Where(p => p.PaymentDate >= fromDate.Value);
+                throw new ArgumentException(
+                    "From date cannot be later than to date");
             }
 
+            if (fromDate.HasValue)
+            {
+                query = query.Where( p => p.PaymentDate >= fromDate.Value);
+            }
 
             if (toDate.HasValue)
             {
@@ -38,7 +47,25 @@ namespace TrainngCenter.Api.Services
 
             if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(p => p.PaymentStatus == status);
+                var allowedStatuses = new[]
+                {
+                    "Pending",
+                    "Paid",
+                    "Failed",
+                    "Refunded"
+                };
+
+                var normalizedStatus = allowedStatuses.FirstOrDefault(s => string.Equals(
+                        s,
+                        status.Trim(),
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (normalizedStatus == null)
+                {
+                    throw new ArgumentException("Invalid payment status");
+                }
+
+                query = query.Where(p => p.PaymentStatus == normalizedStatus);
             }
 
             var payments = await query
@@ -50,7 +77,14 @@ namespace TrainngCenter.Api.Services
 
         public async Task<PaymentResponse?> GetByIdAsync(int id)
         {
-            var payment = await _context.Payments.AsNoTracking()
+            if (id <= 0)
+            {
+                throw new ArgumentException(
+                    "Payment ID must be greater than zero.");
+            }
+
+            var payment = await _context.Payments
+                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.PaymentId == id);
 
             if (payment == null)
@@ -63,62 +97,94 @@ namespace TrainngCenter.Api.Services
 
         public async Task<PaymentResponse> CreateAsync(CreatePaymentRequest request)
         {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "Payment request is required");
+            }
+
             if (request.Amount <= 0)
             {
-                throw new ArgumentException("Payment amount must be greater than zero");
+                throw new ArgumentException(
+                    "Payment amount must be greater than zero");
+            }
+
+            if (request.EnrollmentId <= 0)
+            {
+                throw new ArgumentException(
+                    "A valid enrollment ID is required");
             }
 
             if (string.IsNullOrWhiteSpace(request.PaymentMethod))
             {
-                throw new ArgumentException("Payment method is required");
+                throw new ArgumentException(
+                    "Payment method is required");
             }
 
             if (string.IsNullOrWhiteSpace(request.ReferenceNumber))
             {
-                throw new ArgumentException("Reference number is required");
+                throw new ArgumentException(
+                    "Reference number is required");
             }
 
             var enrollmentExists = await _context.Enrollments
-            .AnyAsync(e =>
-             e.EnrollmentId == request.EnrollmentId &&
-            !e.IsDeleted);
+                .AnyAsync(e =>
+                    e.EnrollmentId == request.EnrollmentId &&
+                    !e.IsDeleted);
 
             if (!enrollmentExists)
             {
                 throw new ArgumentException("Enrollment was not found");
             }
 
+            var referenceNumber = request.ReferenceNumber.Trim();
+
             var referenceExists = await _context.Payments
                 .AnyAsync(p =>
-                    p.ReferenceNumber == request.ReferenceNumber);
+                    p.ReferenceNumber == referenceNumber);
 
             if (referenceExists)
             {
                 throw new ArgumentException(
-                    "Reference number already exists");
+                    "Reference number already exists.");
             }
 
             var payment = _mapper.Map<Payment>(request);
 
+            payment.ReferenceNumber = referenceNumber;
+            payment.PaymentMethod = request.PaymentMethod.Trim();
             payment.PaymentDate = DateTime.UtcNow;
             payment.PaymentStatus = "Pending";
 
             _context.Payments.Add(payment);
+
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Payment {PaymentId} created for Enrollment {EnrollmentId}.",
+                payment.PaymentId,
+                payment.EnrollmentId);
 
             return _mapper.Map<PaymentResponse>(payment);
         }
 
         public async Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync(int enrollmentId)
         {
+            if (enrollmentId <= 0)
+            {
+                throw new ArgumentException(
+                    "Enrollment ID must be greater than zero.");
+            }
+
             var enrollmentExists = await _context.Enrollments
-            .AnyAsync(e =>
-            e.EnrollmentId == enrollmentId &&
-           !e.IsDeleted);
+                .AnyAsync(e =>
+                    e.EnrollmentId == enrollmentId &&
+                    !e.IsDeleted);
 
             if (!enrollmentExists)
             {
-                throw new ArgumentException("Enrollment was not found");
+                throw new ArgumentException(
+                    "Enrollment was not found.");
             }
 
             var payments = await _context.Payments
@@ -130,13 +196,19 @@ namespace TrainngCenter.Api.Services
             return _mapper.Map<List<PaymentResponse>>(payments);
         }
 
-        public async Task<bool> UpdateStatusAsync( int id,string status)
+        public async Task<bool> UpdateStatusAsync(int id,string status)
         {
-            var payment = await _context.Payments
-                .FirstOrDefaultAsync(p => p.PaymentId == id);
+            if (id <= 0)
+            {
+                throw new ArgumentException(
+                    "Payment ID must be greater than zero");
+            }
 
-            if (payment == null)
-                return false;
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                throw new ArgumentException(
+                    "Payment status is required");
+            }
 
             var allowedStatuses = new[]
             {
@@ -146,16 +218,46 @@ namespace TrainngCenter.Api.Services
                 "Refunded"
             };
 
-            if (!allowedStatuses.Contains(status))
-                throw new ArgumentException(
-                    "Invalid payment status. Allowed values: Pending,Paid, Failed, Refunded");
+            var normalizedStatus = allowedStatuses.FirstOrDefault(
+                s => string.Equals(
+                    s,
+                    status.Trim(),
+                    StringComparison.OrdinalIgnoreCase));
 
-            payment.PaymentStatus = status;
+            if (normalizedStatus == null)
+            {
+                throw new ArgumentException(
+                    "Invalid payment status. Allowed values: Pending, Paid, Failed, Refunded");
+            }
+
+            var payment = await _context.Payments
+                .FirstOrDefaultAsync(p => p.PaymentId == id);
+
+            if (payment == null)
+            {
+                return false;
+            }
+
+            var oldStatus = payment.PaymentStatus;
+
+            if (oldStatus == normalizedStatus)
+            {
+                return true;
+            }
+
+            payment.PaymentStatus = normalizedStatus;
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation(
+                "Payment {PaymentId} status changed from {OldStatus} to {NewStatus}.",
+                payment.PaymentId,
+                oldStatus,
+                normalizedStatus);
+
             return true;
         }
+
         public async Task<int?> GetPaymentStudentIdAsync(int paymentId)
         {
             return await _context.Payments
@@ -169,10 +271,11 @@ namespace TrainngCenter.Api.Services
         {
             return await _context.Enrollments
                 .AsNoTracking()
-                .Where(e => e.EnrollmentId == enrollmentId && !e.IsDeleted)
+                .Where(e =>
+                    e.EnrollmentId == enrollmentId &&
+                    !e.IsDeleted)
                 .Select(e => (int?)e.StudentId)
                 .FirstOrDefaultAsync();
         }
     }
 }
-

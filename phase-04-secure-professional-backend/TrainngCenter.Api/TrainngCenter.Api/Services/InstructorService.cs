@@ -170,7 +170,6 @@ namespace TrainngCenter.Api.Services
             var session = new TrackSession
             {
                 TrainingTrackId = trackId,
-                SessionDate = request.SessionDate,
                 Title = request.Title.Trim(),
                 Description = request.Description,
                 MeetingLink = request.MeetingLink,

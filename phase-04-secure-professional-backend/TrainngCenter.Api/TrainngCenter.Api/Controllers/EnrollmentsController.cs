@@ -14,7 +14,9 @@ namespace TrainngCenter.Api.Controllers
         private readonly IEnrollmentService _service;
         private readonly ICurrentUserService _currentUserService;
 
-        public EnrollmentsController(IEnrollmentService service, ICurrentUserService currentUserService)
+        public EnrollmentsController(
+            IEnrollmentService service,
+            ICurrentUserService currentUserService)
         {
             _service = service;
             _currentUserService = currentUserService;
@@ -39,6 +41,24 @@ namespace TrainngCenter.Api.Controllers
                 });
             }
 
+            if (trackId.HasValue && trackId.Value <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Track ID must be greater than zero"
+                });
+            }
+
+            if (studentId.HasValue && studentId.Value <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Student ID must be greater than zero"
+                });
+            }
+
             if (_currentUserService.Role == "Instructor")
             {
                 if (!_currentUserService.InstructorId.HasValue)
@@ -56,23 +76,61 @@ namespace TrainngCenter.Api.Controllers
                 var instructorId =
                     await _service.GetTrackInstructorIdAsync(trackId.Value);
 
-                if (instructorId != _currentUserService.InstructorId.Value)
+                if (!instructorId.HasValue)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Training track was not found"
+                    });
+                }
+
+                if (instructorId.Value !=
+                    _currentUserService.InstructorId.Value)
+                {
                     return Forbid();
+                }
             }
 
-            var result = await _service.GetAllAsync( status, trackId, studentId, paymentStatus, pageNumber, pageSize);
-
-            return Ok(new
+            try
             {
-                success = true,
-                data = result
-            });
+                var result = await _service.GetAllAsync(
+                    status,
+                    trackId,
+                    studentId,
+                    paymentStatus,
+                    pageNumber,
+                    pageSize);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
         }
 
         [HttpGet("{id:int}")]
         [Authorize(Roles = "Admin,Instructor,Student")]
         public async Task<IActionResult> GetById(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Enrollment ID must be greater than zero"
+                });
+            }
+
             var result = await _service.GetByIdAsync(id);
 
             if (result == null)
@@ -87,7 +145,8 @@ namespace TrainngCenter.Api.Controllers
             if (_currentUserService.Role == "Student")
             {
                 if (!_currentUserService.StudentId.HasValue ||
-                    result.StudentId != _currentUserService.StudentId.Value)
+                    result.StudentId !=
+                    _currentUserService.StudentId.Value)
                 {
                     return Forbid();
                 }
@@ -102,8 +161,20 @@ namespace TrainngCenter.Api.Controllers
                     await _service.GetTrackInstructorIdAsync(
                         result.TrainingTrackId);
 
-                if (instructorId != _currentUserService.InstructorId.Value)
+                if (!instructorId.HasValue)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Training track was not found"
+                    });
+                }
+
+                if (instructorId.Value !=
+                    _currentUserService.InstructorId.Value)
+                {
                     return Forbid();
+                }
             }
 
             return Ok(new
@@ -115,15 +186,28 @@ namespace TrainngCenter.Api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Student")]
-        public async Task<IActionResult> Create([FromBody] CreateEnrollmentRequest request)
+        public async Task<IActionResult> Create(
+            [FromBody] CreateEnrollmentRequest request)
         {
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Request body is required"
+                });
+            }
+
             if (_currentUserService.Role == "Student")
             {
                 if (!_currentUserService.StudentId.HasValue)
                     return Forbid();
 
-                if (request.StudentId != _currentUserService.StudentId.Value)
+                if (request.StudentId !=
+                    _currentUserService.StudentId.Value)
+                {
                     return Forbid();
+                }
             }
 
             try
@@ -155,6 +239,25 @@ namespace TrainngCenter.Api.Controllers
             int id,
             [FromBody] UpdateEnrollmentStatusRequest request)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Enrollment ID must be greater than zero"
+                });
+            }
+
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.Status))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Enrollment status is required"
+                });
+            }
+
             try
             {
                 var updated = await _service.UpdateStatusAsync(
@@ -190,6 +293,15 @@ namespace TrainngCenter.Api.Controllers
         [Authorize(Roles = "Admin,Student")]
         public async Task<IActionResult> GetStudentEnrollments(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Student ID must be greater than zero"
+                });
+            }
+
             if (_currentUserService.Role == "Student")
             {
                 if (!_currentUserService.StudentId.HasValue ||
@@ -199,7 +311,8 @@ namespace TrainngCenter.Api.Controllers
                 }
             }
 
-            var result = await _service.GetStudentEnrollmentsAsync(id);
+            var result =
+                await _service.GetStudentEnrollmentsAsync(id);
 
             if (result == null)
             {
@@ -221,6 +334,15 @@ namespace TrainngCenter.Api.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Enrollment ID must be greater than zero"
+                });
+            }
+
             var deleted = await _service.DeleteAsync(id);
 
             if (!deleted)
