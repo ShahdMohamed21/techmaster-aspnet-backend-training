@@ -1,10 +1,13 @@
-﻿namespace TrainngCenter.Api.Entities
+﻿
+namespace TrainngCenter.Api.Entities
 {
     public class AuditLog
     {
         public int AuditLogId { get; set; }
 
         public int? UserId { get; set; }
+
+        public string? UserRole { get; set; }
 
         public string Action { get; set; } = string.Empty;
 
@@ -14,6 +17,12 @@
 
         public string? Details { get; set; }
 
+        public string? Description { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public string? IpAddress { get; set; }
+
+        public string? Metadata { get; set; }
     }
 }

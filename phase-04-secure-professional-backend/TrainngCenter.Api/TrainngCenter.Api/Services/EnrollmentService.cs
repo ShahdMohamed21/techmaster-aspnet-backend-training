@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.Entities;
 using TrainingCenter.Api.Services.Interfaces;
 using TrainngCenter.Api.DTOs.Enrollments;
 using TrainngCenter.Api.DTOs.Students;
+using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Services
 {
@@ -12,11 +14,13 @@ namespace TrainngCenter.Api.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<EnrollmentService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public EnrollmentService(ApplicationDbContext context,ILogger<EnrollmentService> logger)
+        public EnrollmentService(ApplicationDbContext context,ILogger<EnrollmentService> logger,IAuditLogService auditLogService)
         {
             _context = context;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         private static bool IsOccupyingSeat(Enrollment enrollment)
@@ -152,7 +156,7 @@ namespace TrainngCenter.Api.Services
             return enrollment;
         }
 
-        public async Task<EnrollmentDetailsResponse> CreateAsync(CreateEnrollmentRequest request)
+        public async Task<EnrollmentDetailsResponse> CreateAsync( CreateEnrollmentRequest request)
         {
             if (request == null)
                 throw new ArgumentException("Request is required.");
@@ -254,6 +258,19 @@ namespace TrainngCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync(
+                action: "EnrollmentRequested",
+                entityName: "Enrollment",
+                entityId: enrollment.EnrollmentId,
+                description: "A new enrollment was requested.",
+                metadata: new
+                {
+                    StudentId = enrollment.StudentId,
+                    TrainingTrackId = enrollment.TrainingTrackId,
+                    Status = enrollment.Status
+                }
+            );
+
             _logger.LogInformation(
                 "Enrollment {EnrollmentId} created successfully for track {TrackId}",
                 enrollment.EnrollmentId,
@@ -270,8 +287,7 @@ namespace TrainngCenter.Api.Services
             return result;
         }
 
-        public async Task<List<EnrollmentListItemResponse>?>
-            GetStudentEnrollmentsAsync(int studentId)
+        public async Task<List<EnrollmentListItemResponse>?>GetStudentEnrollmentsAsync(int studentId)
         {
             if (studentId <= 0)
                 return null;
@@ -333,7 +349,7 @@ namespace TrainngCenter.Api.Services
             return students;
         }
 
-        public async Task<bool> UpdateStatusAsync(int id,string status)
+        public async Task<bool> UpdateStatusAsync(int id, string status)
         {
             if (id <= 0)
                 throw new ArgumentException(
@@ -372,6 +388,19 @@ namespace TrainngCenter.Api.Services
             enrollment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(
+                action: "EnrollmentStatusUpdated",
+                entityName: "Enrollment",
+                entityId: enrollment.EnrollmentId,
+                description:
+                    $"Enrollment status changed from {oldStatus} to {normalizedStatus}.",
+                metadata: new
+                {
+                    OldStatus = oldStatus,
+                    NewStatus = normalizedStatus
+                }
+            );
 
             _logger.LogInformation(
                 "Enrollment {EnrollmentId} status changed from {OldStatus} to {NewStatus}",

@@ -10,6 +10,7 @@ using TrainingCenter.Api.DTOs.Auth;
 using TrainingCenter.Api.Entities;
 using TrainingCenter.Api.Enums;
 using TrainingCenter.Api.Services.Interfaces;
+using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainingCenter.Api.Services
 {
@@ -19,17 +20,19 @@ namespace TrainingCenter.Api.Services
         private readonly IConfiguration _configuration;
         private readonly PasswordHasher<ApplicationUser> _passwordHasher;
         private readonly ILogger<AuthService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public AuthService(ApplicationDbContext context,IConfiguration configuration,ILogger<AuthService> logger)
+        public AuthService(ApplicationDbContext context,IConfiguration configuration,ILogger<AuthService> logger, IAuditLogService auditLogService)
         {
             _context = context;
             _configuration = configuration;
             _logger = logger;
+            _auditLogService = auditLogService;
+
             _passwordHasher = new PasswordHasher<ApplicationUser>();
         }
 
-        public async Task<(bool Success, string Message, AuthResponse? Data)> RegisterAsync(
-            RegisterRequest request)
+        public async Task<(bool Success, string Message, AuthResponse? Data)> RegisterAsync( RegisterRequest request)
         {
             if (request == null)
                 return (false, "Invalid registration request", null);
@@ -69,19 +72,14 @@ namespace TrainingCenter.Api.Services
 
             var email = request.Email.Trim().ToLowerInvariant();
 
-            var exists = await _context.ApplicationUsers
-                .AnyAsync(x => x.Email == email);
+            var exists = await _context.ApplicationUsers.AnyAsync(x => x.Email == email);
 
             if (exists)
             {
-                return (
-                    false,
-                    "Email is already registered",
-                    null);
+                return ( false,"Email is already registered",null);
             }
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            await using var transaction =await _context.Database.BeginTransactionAsync();
 
             try
             {
@@ -124,6 +122,21 @@ namespace TrainingCenter.Api.Services
                     await _context.SaveChangesAsync();
                 }
 
+                await _auditLogService.LogAsync(
+                    action: "UserRegistered",
+                    entityName: "ApplicationUser",
+                    entityId: user.Id,
+                    description: $"User registered successfully with role {user.Role}.",
+                    userId: user.Id,
+                    userRole: user.Role.ToString(),
+                    metadata: new
+                    {
+                        user.FullName,
+                        user.Email,
+                        Role = user.Role.ToString()
+                    }
+                );
+
                 await transaction.CommitAsync();
 
                 _logger.LogInformation(
@@ -163,56 +176,37 @@ namespace TrainingCenter.Api.Services
                 _logger.LogWarning(
                     "Login failed because required credentials were missing");
 
-                return (
-                    false,
-                    "Email and password are required",
-                    null);
+                return (false,"Email and password are required",null);
             }
 
             var email = request.Email.Trim().ToLowerInvariant();
 
-            var user = await _context.ApplicationUsers
-                .FirstOrDefaultAsync(x => x.Email == email);
+            var user = await _context.ApplicationUsers.FirstOrDefaultAsync(x => x.Email == email);
 
             if (user == null)
             {
-                _logger.LogWarning(
-                    "Login failed because the user was not found.");
+                _logger.LogWarning("Login failed because the user was not found.");
 
-                return (
-                    false,
-                    "Invalid email or password",
-                    null);
+                return (false,"Invalid email or password",null);
             }
 
             if (!user.IsActive)
             {
-                _logger.LogWarning(
-                    "Login failed because the account is inactive. UserId: {UserId}",
-                    user.Id);
+                _logger.LogWarning("Login failed because the account is inactive. UserId: {UserId}",user.Id);
 
-                return (
-                    false,
-                    "User account is inactive",
-                    null);
+                return (false,"User account is inactive",null);
             }
 
-            var verification =
-                _passwordHasher.VerifyHashedPassword(
+            var verification =_passwordHasher.VerifyHashedPassword(
                     user,
                     user.PasswordHash,
                     request.Password);
 
             if (verification == PasswordVerificationResult.Failed)
             {
-                _logger.LogWarning(
-                    "Login failed because the password was incorrect. UserId: {UserId}",
-                    user.Id);
+                _logger.LogWarning("Login failed because the password was incorrect. UserId: {UserId}",user.Id);
 
-                return (
-                    false,
-                    "Invalid email or password",
-                    null);
+                return (false,"Invalid email or password",null);
             }
 
             user.LastLoginAt = DateTime.UtcNow;
@@ -234,9 +228,28 @@ namespace TrainingCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "User logged in successfully. UserId: {UserId}",
-                user.Id);
+            try
+            {
+                await _auditLogService.LogAsync(
+                    action: "UserLoggedIn",
+                    entityName: "ApplicationUser",
+                    entityId: user.Id,
+                    description: "User logged in successfully.",
+                    userId: user.Id,
+                    userRole: user.Role.ToString(),
+                    metadata: new
+                    {
+                        user.Email,
+                        Role = user.Role.ToString()
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,"Failed to create login audit log for UserId: {UserId}",user.Id);
+            }
+
+            _logger.LogInformation( "User logged in successfully. UserId: {UserId}",user.Id);
 
             return (
                 true,
@@ -278,7 +291,7 @@ namespace TrainingCenter.Api.Services
             };
         }
 
-        public async Task<(bool Success, string Message)> ChangePasswordAsync(ClaimsPrincipal principal, ChangePasswordRequest request)
+        public async Task<(bool Success, string Message)> ChangePasswordAsync(ClaimsPrincipal principal,ChangePasswordRequest request)
         {
             var userId = GetUserId(principal);
 
@@ -297,7 +310,8 @@ namespace TrainingCenter.Api.Services
                     StringComparison.Ordinal))
             {
                 return (
-                    false,"Passwords do not match");
+                    false,
+                    "Passwords do not match");
             }
 
             var user = await _context.ApplicationUsers
@@ -343,13 +357,9 @@ namespace TrainingCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "Password changed successfully. UserId: {UserId}",
-                user.Id);
+            _logger.LogInformation("Password changed successfully. UserId: {UserId}",user.Id);
 
-            return (
-                true,
-                "Password changed successfully");
+            return (true,"Password changed successfully");
         }
 
         public async Task<(bool Success, string Message, AuthResponse? Data)> RefreshTokenAsync(
@@ -373,47 +383,31 @@ namespace TrainingCenter.Api.Services
 
             if (storedToken == null)
             {
-                _logger.LogWarning(
-                    "Token refresh failed because the token was invalid.");
+                _logger.LogWarning( "Token refresh failed because the token was invalid.");
 
-                return (
-                    false,
-                    "Invalid refresh token",
-                    null);
+                return (false,"Invalid refresh token",null);
             }
 
             if (storedToken.RevokedAt != null)
             {
-                _logger.LogWarning(
-                    "Token refresh failed because the token was revoked. UserId: {UserId}",
-                    storedToken.UserId);
+                _logger.LogWarning("Token refresh failed because the token was revoked. UserId: {UserId}",storedToken.UserId);
 
-                return (
-                    false,
-                    "Refresh token has been revoked",
-                    null);
+                return (false,"Refresh token has been revoked",null);
             }
 
             if (storedToken.ExpiresAt <= DateTime.UtcNow)
             {
-                return (
-                    false,
-                    "Refresh token has expired",
-                    null);
+                return (false,"Refresh token has expired",null);
             }
 
             if (!storedToken.User.IsActive)
             {
-                return (
-                    false,
-                    "User account is inactive",
-                    null);
+                return (false,"User account is inactive", null);
             }
 
             storedToken.RevokedAt = DateTime.UtcNow;
 
-            var accessToken =
-                GenerateAccessToken(storedToken.User);
+            var accessToken =GenerateAccessToken(storedToken.User);
 
             var newRefreshToken = GenerateRefreshToken();
 
@@ -429,13 +423,9 @@ namespace TrainingCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "Refresh token rotated successfully. UserId: {UserId}",
-                storedToken.UserId);
+            _logger.LogInformation("Refresh token rotated successfully. UserId: {UserId}",storedToken.UserId);
 
-            return (
-                true,
-                "Token refreshed successfully",
+            return (true,"Token refreshed successfully",
                 new AuthResponse
                 {
                     AccessToken = accessToken.Token,

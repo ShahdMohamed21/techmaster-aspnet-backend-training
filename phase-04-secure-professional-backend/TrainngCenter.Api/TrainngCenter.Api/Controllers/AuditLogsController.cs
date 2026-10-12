@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Controllers
 {
     [ApiController]
-    [Route("api/audit-logs")]
+    [Route("api/admin/activity-logs")]
     [Authorize(Roles = "Admin")]
     public class AuditLogsController : ControllerBase
     {
@@ -17,9 +18,27 @@ namespace TrainngCenter.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? userId,[FromQuery] string? entityName,[FromQuery] DateTime? from,[FromQuery] DateTime? to,[FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 20)
         {
-            var result = await _service.GetAllAsync();
+            if (pageNumber < 1 || pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Page number must be positive and page size must be between 1 and 100"
+                });
+            }
+
+            if (from.HasValue && to.HasValue && from.Value > to.Value)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "'from' must be earlier than or equal to 'to'"
+                });
+            }
+
+            var result = await _service.GetAllAsync( userId,entityName,from, to,pageNumber,pageSize);
 
             return Ok(new
             {

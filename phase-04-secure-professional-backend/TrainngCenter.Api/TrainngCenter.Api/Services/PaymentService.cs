@@ -14,15 +14,17 @@ namespace TrainngCenter.Api.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<PaymentService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public PaymentService(ApplicationDbContext context,IMapper mapper,ILogger<PaymentService> logger)
+        public PaymentService(ApplicationDbContext context,IMapper mapper,ILogger<PaymentService> logger,IAuditLogService auditLogService)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
-        public async Task<List<PaymentResponse>> GetAllAsync(DateTime? fromDate,DateTime? toDate, string? status)
+        public async Task<List<PaymentResponse>> GetAllAsync(DateTime? fromDate,DateTime? toDate,string? status)
         {
             var query = _context.Payments
                 .AsNoTracking()
@@ -37,12 +39,14 @@ namespace TrainngCenter.Api.Services
 
             if (fromDate.HasValue)
             {
-                query = query.Where( p => p.PaymentDate >= fromDate.Value);
+                query = query.Where(
+                    p => p.PaymentDate >= fromDate.Value);
             }
 
             if (toDate.HasValue)
             {
-                query = query.Where(p => p.PaymentDate <= toDate.Value);
+                query = query.Where(
+                    p => p.PaymentDate <= toDate.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -55,7 +59,8 @@ namespace TrainngCenter.Api.Services
                     "Refunded"
                 };
 
-                var normalizedStatus = allowedStatuses.FirstOrDefault(s => string.Equals(
+                var normalizedStatus = allowedStatuses.FirstOrDefault(
+                    s => string.Equals(
                         s,
                         status.Trim(),
                         StringComparison.OrdinalIgnoreCase));
@@ -65,7 +70,8 @@ namespace TrainngCenter.Api.Services
                     throw new ArgumentException("Invalid payment status");
                 }
 
-                query = query.Where(p => p.PaymentStatus == normalizedStatus);
+                query = query.Where(
+                    p => p.PaymentStatus == normalizedStatus);
             }
 
             var payments = await query
@@ -160,6 +166,21 @@ namespace TrainngCenter.Api.Services
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync(
+                action: "PaymentCreated",
+                entityName: "Payment",
+                entityId: payment.PaymentId,
+                description:
+                    $"Payment {payment.PaymentId} was created with Pending status.",
+                metadata: new
+                {
+                    payment.EnrollmentId,
+                    payment.Amount,
+                    payment.PaymentMethod,
+                    Status = payment.PaymentStatus
+                }
+            );
+
             _logger.LogInformation(
                 "Payment {PaymentId} created for Enrollment {EnrollmentId}.",
                 payment.PaymentId,
@@ -168,7 +189,7 @@ namespace TrainngCenter.Api.Services
             return _mapper.Map<PaymentResponse>(payment);
         }
 
-        public async Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync(int enrollmentId)
+        public async Task<List<PaymentResponse>> GetEnrollmentPaymentsAsync( int enrollmentId)
         {
             if (enrollmentId <= 0)
             {
@@ -196,7 +217,7 @@ namespace TrainngCenter.Api.Services
             return _mapper.Map<List<PaymentResponse>>(payments);
         }
 
-        public async Task<bool> UpdateStatusAsync(int id,string status)
+        public async Task<bool> UpdateStatusAsync(int id, string status)
         {
             if (id <= 0)
             {
@@ -248,6 +269,20 @@ namespace TrainngCenter.Api.Services
             payment.PaymentStatus = normalizedStatus;
 
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(
+                action: "PaymentStatusUpdated",
+                entityName: "Payment",
+                entityId: payment.PaymentId,
+                description:
+                    $"Payment status changed from {oldStatus} to {normalizedStatus}.",
+                metadata: new
+                {
+                    OldStatus = oldStatus,
+                    NewStatus = normalizedStatus,
+                    payment.EnrollmentId
+                }
+            );
 
             _logger.LogInformation(
                 "Payment {PaymentId} status changed from {OldStatus} to {NewStatus}.",

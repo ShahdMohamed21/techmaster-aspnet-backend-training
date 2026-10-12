@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TrainingCenter.Api.Data;
@@ -14,16 +15,16 @@ namespace TrainngCenter.Api.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<TrackService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public TrackService(
-            ApplicationDbContext context,
-            IMapper mapper,
-            ILogger<TrackService> logger)
+        public TrackService(ApplicationDbContext context,IMapper mapper,ILogger<TrackService> logger,IAuditLogService auditLogService)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
+
         private static bool IsOccupyingSeat(Enrollment enrollment)
         {
             return !enrollment.IsDeleted &&
@@ -31,9 +32,7 @@ namespace TrainngCenter.Api.Services
                     enrollment.Status == "Pending");
         }
 
-        public async Task<(bool success,string message,
-            TrackDetailsResponse? Data)> CreateAsync(
-                CreateTrackRequest request)
+        public async Task<(bool success, string message,TrackDetailsResponse? Data)> CreateAsync(CreateTrackRequest request)
         {
             if (request == null)
                 return (false, "Request is required", null);
@@ -82,6 +81,20 @@ namespace TrainngCenter.Api.Services
 
             await _context.TrainingTracks.AddAsync(track);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(
+                action: "TrackCreated",
+                entityName: "TrainingTrack",
+                entityId: track.TrainingTrackId,
+                description: $"Training track '{track.Title}' was created.",
+                metadata: new
+                {
+                    TrackCode = track.Code,
+                    TrackLevel = track.Level,
+                    InstructorId = track.InstructorId,
+                    Capacity = track.Capacity
+                }
+            );
 
             _logger.LogInformation(
                 "Training track {TrackId} created successfully",
@@ -195,7 +208,8 @@ namespace TrainngCenter.Api.Services
             if (track == null)
                 return null;
 
-            var enrolledCount = track.Enrollments.Count(IsOccupyingSeat);
+            var enrolledCount =
+                track.Enrollments.Count(IsOccupyingSeat);
 
             return new TrackDetailsResponse
             {
@@ -247,7 +261,7 @@ namespace TrainngCenter.Api.Services
             return students;
         }
 
-        public async Task<(bool success, string message)> UpdateAsync(int id,UpdateTrackRequest request)
+        public async Task<(bool success, string message)> UpdateAsync(int id, UpdateTrackRequest request)
         {
             if (request == null)
                 return (false, "Request is required");
@@ -313,7 +327,6 @@ namespace TrainngCenter.Api.Services
 
             _mapper.Map(request, track);
 
-
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
@@ -357,6 +370,7 @@ namespace TrainngCenter.Api.Services
             }
 
             track.InstructorId = instructorId;
+
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
