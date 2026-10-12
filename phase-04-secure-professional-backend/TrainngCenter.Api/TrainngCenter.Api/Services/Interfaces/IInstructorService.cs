@@ -1,4 +1,5 @@
 ﻿using System;
+using TrainngCenter.Api.DTOs.Instructor;
 using TrainngCenter.Api.DTOs.Instructors;
 using TrainngCenter.Api.DTOs.Students;
 using TrainngCenter.Api.DTOs.Tracks;
@@ -17,7 +18,13 @@ namespace TrainngCenter.Api.Services.Interfaces
         
         Task<List<TrackListItemResponse>> GetMyTracksAsync(int instructorId);
 
-        Task<List<TrackStudentResponse>> GetTrackStudentsAsync(int instructorId,int trackId);
+        Task<List<TrackStudentResponse>?> GetTrackStudentsAsync(int instructorId,int trackId);
+
+        Task<SessionResponse> CreateSessionAsync(int instructorId,int trackId,CreateSessionRequest request);
+
+        Task<SessionResponse?> UpdateSessionAsync(int instructorId,int sessionId,UpdateSessionRequest request);
+
+        Task<List<TrackStudentResponse>> GetTrackProgressAsync(int instructorId,int trackId);
 
 
 

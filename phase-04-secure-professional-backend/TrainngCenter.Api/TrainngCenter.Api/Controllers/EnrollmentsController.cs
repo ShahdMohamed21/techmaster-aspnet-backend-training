@@ -115,8 +115,7 @@ namespace TrainngCenter.Api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Student")]
-        public async Task<IActionResult> Create(
-            [FromBody] CreateEnrollmentRequest request)
+        public async Task<IActionResult> Create([FromBody] CreateEnrollmentRequest request)
         {
             if (_currentUserService.Role == "Student")
             {

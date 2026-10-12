@@ -379,6 +379,51 @@ namespace TrainngCenter.Api.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("TrainngCenter.Api.Entities.TrackSession", b =>
+                {
+                    b.Property<int>("TrackSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TrackSessionId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedByInstructorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MeetingLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SessionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TrainingTrackId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TrackSessionId");
+
+                    b.HasIndex("CreatedByInstructorId");
+
+                    b.HasIndex("TrainingTrackId");
+
+                    b.ToTable("TrackSessions");
+                });
+
             modelBuilder.Entity("TrainingCenter.Api.Entities.Enrollment", b =>
                 {
                     b.HasOne("TrainingCenter.Api.Entities.Student", "Student")
@@ -429,6 +474,25 @@ namespace TrainngCenter.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Instructor");
+                });
+
+            modelBuilder.Entity("TrainngCenter.Api.Entities.TrackSession", b =>
+                {
+                    b.HasOne("TrainingCenter.Api.Entities.Instructor", "CreatedByInstructor")
+                        .WithMany()
+                        .HasForeignKey("CreatedByInstructorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TrainingCenter.Api.Entities.TrainingTrack", "TrainingTrack")
+                        .WithMany()
+                        .HasForeignKey("TrainingTrackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByInstructor");
+
+                    b.Navigation("TrainingTrack");
                 });
 
             modelBuilder.Entity("TrainingCenter.Api.Entities.Enrollment", b =>

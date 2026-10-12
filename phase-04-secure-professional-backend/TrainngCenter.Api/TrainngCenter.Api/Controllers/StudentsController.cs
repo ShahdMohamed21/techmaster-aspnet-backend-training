@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using TrainingCenter.Api.DTOs.Students;
 using TrainingCenter.Api.Services.Interfaces;
+using TrainngCenter.Api.DTOs.Enrollments;
+using TrainngCenter.Api.DTOs.Students;
 using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainingCenter.Api.Controllers
@@ -13,11 +15,13 @@ namespace TrainingCenter.Api.Controllers
     {
         private readonly IStudentService _service;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IEnrollmentService _enrollmentService;
 
-        public StudentsController(IStudentService service, ICurrentUserService currentUserService)
+        public StudentsController(IStudentService service, ICurrentUserService currentUserService, IEnrollmentService enrollmentService)
         {
             _service = service;
             _currentUserService = currentUserService;
+            _enrollmentService = enrollmentService;
         }
 
         [HttpGet]
@@ -143,5 +147,128 @@ namespace TrainingCenter.Api.Controllers
                 message = result.Message
             });
         }
+
+        [HttpGet("me")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            if (_currentUserService.StudentId == null)
+                return Forbid();
+
+            var student = await _service.GetMyProfileAsync(_currentUserService.StudentId.Value);
+
+            if (student == null)
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Student not found"
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                data = student
+            });
+        }
+
+        [HttpGet("my-enrollments")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetMyEnrollments()
+        {
+            if (_currentUserService.StudentId == null)
+                return Forbid();
+
+            var enrollments = await _service.GetMyEnrollmentsAsync(_currentUserService.StudentId.Value);
+
+            return Ok(new
+            {
+                success = true,
+                data = enrollments
+            });
+        }
+
+        [HttpGet("my-payments")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetMyPayments()
+        {
+            if (_currentUserService.StudentId == null)
+                return Forbid();
+
+            var payments = await _service.GetMyPaymentsAsync( _currentUserService.StudentId.Value);
+
+            return Ok(new
+            {
+                success = true,
+                data = payments
+            });
+        }
+
+        [HttpPost("enrollment-requests")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> CreateEnrollmentRequest([FromBody] StudentEnrollmentRequest request)
+        {
+            if (_currentUserService.StudentId == null)
+                return Forbid();
+
+            var enrollmentRequest = new CreateEnrollmentRequest
+            {
+                StudentId = _currentUserService.StudentId.Value,
+                TrainingTrackId = request.TrainingTrackId
+            };
+
+            try
+            {
+                var result = await HttpContext.RequestServices
+                    .GetRequiredService<IEnrollmentService>()
+                    .CreateAsync(enrollmentRequest);
+
+                return StatusCode(201, new
+                {
+                    success = true,
+                    message = "Enrollment request submitted successfully",
+                    data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("me")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> UpdateMyProfile(
+            [FromBody] UpdateMyProfileRequest request)
+        {
+            if (_currentUserService.StudentId == null)
+                return Forbid();
+
+            var result = await _service.UpdateMyProfileAsync(_currentUserService.StudentId.Value, request);
+
+            if (!result.Success)
+            {
+                if (result.Message == "Student not found or inactive")
+                    return NotFound(new { success = false, message = result.Message });
+
+                return Conflict(new { success = false, message = result.Message });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                message = result.Message
+            });
+        }
+
+
+
+
+
     }
 }

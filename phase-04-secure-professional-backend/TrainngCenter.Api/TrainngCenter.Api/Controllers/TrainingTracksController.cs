@@ -288,5 +288,23 @@ namespace TrainngCenter.Api.Controllers
             }
         }
 
+        [HttpGet("available")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetAvailableTracks()
+        {
+            var tracks = await _service.GetAllAsync(null,null,"Open",null);
+
+            var availableTracks = tracks
+                .Where(t => t.EnrolledStudents < t.Capacity)
+                .ToList();
+
+            return Ok(new
+            {
+                success = true,
+                data = availableTracks
+            });
+        }
+
+
     }
 }

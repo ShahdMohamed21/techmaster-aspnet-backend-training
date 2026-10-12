@@ -137,21 +137,21 @@ namespace TrainngCenter.Api.Services
             if (track == null)
                 return null;
             var students = await _context.Enrollments
-     .AsNoTracking()
-     .Where(e =>
-         e.TrainingTrackId == id &&
-         !e.Student.IsDeleted)
-     .Select(e => new StudentListItemResponse
-     {
-         StudentId = e.Student.StudentId,
-         FullName = e.Student.FullName,
-         Email = e.Student.Email,
-         PhoneNumber = e.Student.PhoneNumber,
-         IsActive = e.Student.IsActive,
-         EnrollmentStatus = e.Status,
-         EnrollmentDate = e.EnrollmentDate
-     })
-     .ToListAsync();
+             .AsNoTracking()
+             .Where(e =>
+             e.TrainingTrackId == id &&
+            !e.Student.IsDeleted)
+            .Select(e => new StudentListItemResponse
+            {
+              StudentId = e.Student.StudentId,
+              FullName = e.Student.FullName,
+              Email = e.Student.Email,
+              PhoneNumber = e.Student.PhoneNumber,
+              IsActive = e.Student.IsActive,
+              EnrollmentStatus = e.Status,
+              EnrollmentDate = e.EnrollmentDate
+            })
+            .ToListAsync();
 
             return students;
         }
@@ -182,15 +182,9 @@ namespace TrainngCenter.Api.Services
             await _context.SaveChangesAsync();
             return (true, "Training track updated successfully");
         }
-        ```csharp
-public async Task<bool> AssignInstructorAsync(
-    int trackId,
-    int instructorId)
+          public async Task<bool> AssignInstructorAsync(int trackId,int instructorId)
         {
-            var track = await _context.TrainingTracks
-                .FirstOrDefaultAsync(t =>
-                    t.TrainingTrackId == trackId &&
-                    !t.IsDeleted);
+            var track = await _context.TrainingTracks.FirstOrDefaultAsync(t => t.TrainingTrackId == trackId &&!t.IsDeleted);
 
             if (track == null)
                 return false;
@@ -210,7 +204,6 @@ public async Task<bool> AssignInstructorAsync(
 
             return true;
         }
-```
       
     }
 }

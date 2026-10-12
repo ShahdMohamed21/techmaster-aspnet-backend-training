@@ -26,5 +26,6 @@ namespace TrainingCenter.Api.Data
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<TrackSession> TrackSessions { get; set; }
     }
 }

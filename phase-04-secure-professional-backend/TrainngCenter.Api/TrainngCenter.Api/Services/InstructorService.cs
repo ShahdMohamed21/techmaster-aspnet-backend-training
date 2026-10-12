@@ -2,9 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using TrainingCenter.Api.Data;
 using TrainingCenter.Api.Entities;
+using TrainngCenter.Api.DTOs.Instructor;
 using TrainngCenter.Api.DTOs.Instructors;
 using TrainngCenter.Api.DTOs.Students;
 using TrainngCenter.Api.DTOs.Tracks;
+using TrainngCenter.Api.Entities;
 using TrainngCenter.Api.Services.Interfaces;
 
 namespace TrainngCenter.Api.Services
@@ -124,7 +126,122 @@ namespace TrainngCenter.Api.Services
                 })
                 .ToListAsync();
         }
-        public async Task<List<TrackStudentResponse>> GetTrackStudentsAsync(int instructorId, int trackId)
+        public async Task<List<TrackStudentResponse>?> GetTrackStudentsAsync(int instructorId,int trackId)
+        {
+            var trackExists = await _context.TrainingTracks.AnyAsync(t =>
+                    t.TrainingTrackId == trackId &&
+                    t.InstructorId == instructorId &&
+                    !t.IsDeleted);
+
+            if (!trackExists)
+                return null;
+
+            return await _context.Enrollments.AsNoTracking().Where(e =>e.TrainingTrackId == trackId &&!e.IsDeleted)
+                .Select(e => new TrackStudentResponse
+                {
+                    StudentId = e.Student.StudentId,
+                    StudentName = e.Student.FullName,
+                    Email = e.Student.Email,
+                    EnrollmentId = e.EnrollmentId,
+                    EnrollmentStatus = e.Status,
+                    ProgressPercentage = e.ProgressPercentage
+                })
+                .ToListAsync();
+        }
+        public async Task<SessionResponse> CreateSessionAsync(int instructorId,int trackId,CreateSessionRequest request)
+        {
+            var track = await _context.TrainingTracks
+                .FirstOrDefaultAsync(t =>
+                    t.TrainingTrackId == trackId &&
+                    t.InstructorId == instructorId &&
+                    !t.IsDeleted);
+
+            if (track == null)
+            {
+                throw new UnauthorizedAccessException(
+                    "You are not assigned to this training track");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                throw new ArgumentException("Session title is required");
+            }
+
+            var session = new TrackSession
+            {
+                TrainingTrackId = trackId,
+                SessionDate = request.SessionDate,
+                Title = request.Title.Trim(),
+                Description = request.Description,
+                MeetingLink = request.MeetingLink,
+                IsCompleted = false,
+                CreatedByInstructorId = instructorId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TrackSessions.Add(session);
+            await _context.SaveChangesAsync();
+
+            return new SessionResponse
+            {
+                TrackSessionId = session.TrackSessionId,
+                TrainingTrackId = session.TrainingTrackId,
+                SessionDate = session.SessionDate,
+                Title = session.Title,
+                Description = session.Description,
+                MeetingLink = session.MeetingLink,
+                IsCompleted = session.IsCompleted,
+                CreatedByInstructorId = session.CreatedByInstructorId,
+                CreatedAt = session.CreatedAt,
+                UpdatedAt = session.UpdatedAt
+            };
+        }
+        public async Task<SessionResponse?> UpdateSessionAsync(int instructorId,int sessionId,UpdateSessionRequest request)
+        {
+            var session = await _context.TrackSessions.FirstOrDefaultAsync(s =>s.TrackSessionId == sessionId);
+
+            if (session == null)
+                return null;
+
+            var ownsTrack = await _context.TrainingTracks.AnyAsync(t =>
+                    t.TrainingTrackId == session.TrainingTrackId &&
+                    t.InstructorId == instructorId &&
+                    !t.IsDeleted);
+
+            if (!ownsTrack)
+            {
+                throw new UnauthorizedAccessException("You are not assigned to this training track");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                throw new ArgumentException("Session title is required");
+            }
+
+            session.SessionDate = request.SessionDate;
+            session.Title = request.Title.Trim();
+            session.Description = request.Description;
+            session.MeetingLink = request.MeetingLink;
+            session.IsCompleted = request.IsCompleted;
+            session.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new SessionResponse
+            {
+                TrackSessionId = session.TrackSessionId,
+                TrainingTrackId = session.TrainingTrackId,
+                SessionDate = session.SessionDate,
+                Title = session.Title,
+                Description = session.Description,
+                MeetingLink = session.MeetingLink,
+                IsCompleted = session.IsCompleted,
+                CreatedByInstructorId = session.CreatedByInstructorId,
+                CreatedAt = session.CreatedAt,
+                UpdatedAt = session.UpdatedAt
+            };
+        }
+        public async Task<List<TrackStudentResponse>> GetTrackProgressAsync(int instructorId,int trackId)
         {
             var trackExists = await _context.TrainingTracks
                 .AnyAsync(t =>
@@ -133,10 +250,11 @@ namespace TrainngCenter.Api.Services
                     !t.IsDeleted);
 
             if (!trackExists)
-                return null!;
+            {
+                throw new UnauthorizedAccessException("You are not assigned to this training track");
+            }
 
-            return await _context.Enrollments
-                .AsNoTracking()
+            return await _context.Enrollments.AsNoTracking()
                 .Where(e =>
                     e.TrainingTrackId == trackId &&
                     !e.IsDeleted)
@@ -151,6 +269,7 @@ namespace TrainngCenter.Api.Services
                 })
                 .ToListAsync();
         }
+
 
     }
 }

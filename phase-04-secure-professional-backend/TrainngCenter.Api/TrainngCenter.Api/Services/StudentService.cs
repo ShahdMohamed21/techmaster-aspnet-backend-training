@@ -4,6 +4,7 @@ using TrainingCenter.Api.Data;
 using TrainingCenter.Api.DTOs.Students;
 using TrainingCenter.Api.Entities;
 using TrainingCenter.Api.Services.Interfaces;
+using TrainngCenter.Api.DTOs.Students;
 
 namespace TrainingCenter.Api.Services
 {
@@ -136,5 +137,80 @@ namespace TrainingCenter.Api.Services
 
             return (true, "Student deleted successfully");
         }
+
+        public async Task<StudentDetailsResponse?> GetMyProfileAsync(int studentId)
+        {
+            return await GetByIdAsync(studentId);
+        }
+
+        public async Task<List<MyEnrollmentResponse>> GetMyEnrollmentsAsync(int studentId)
+        {
+            return await _context.Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    e.StudentId == studentId &&
+                    !e.IsDeleted)
+                .Select(e => new MyEnrollmentResponse
+                {
+                    EnrollmentId = e.EnrollmentId,
+                    TrainingTrackId = e.TrainingTrackId,
+                    TrackTitle = e.TrainingTrack.Title,
+                    EnrollmentStatus = e.Status,
+                    ProgressPercentage = e.ProgressPercentage
+                })
+                .ToListAsync();
+        }
+
+
+        public async Task<List<MyPaymentResponse>> GetMyPaymentsAsync(int studentId)
+        {
+            return await _context.Payments
+                .AsNoTracking()
+                .Where(p => p.Enrollment.StudentId == studentId)
+                .Select(p => new MyPaymentResponse
+                {
+                    PaymentId = p.PaymentId,
+                    EnrollmentId = p.EnrollmentId,
+                    Amount = p.Amount,
+                    PaymentMethod = p.PaymentMethod,
+                    PaymentDate = p.PaymentDate,
+                    PaymentStatus = p.PaymentStatus,
+                    ReferenceNumber = p.ReferenceNumber
+                })
+                .ToListAsync();
+        }
+
+        public async Task<(bool Success, string Message)> UpdateMyProfileAsync(int studentId,UpdateMyProfileRequest request)
+        {
+            var student = await _context.Students.FirstOrDefaultAsync(s =>
+                s.StudentId == studentId &&
+                !s.IsDeleted &&
+                s.IsActive);
+
+            if (student == null)
+                return (false, "Student not found or inactive");
+
+            var emailExists = await _context.Students.AnyAsync(s =>
+                s.Email == request.Email &&
+                s.StudentId != studentId &&
+                !s.IsDeleted);
+
+            if (emailExists)
+                return (false, "Another student already uses this email");
+
+            student.FullName = request.FullName;
+            student.Email = request.Email;
+            student.PhoneNumber = request.PhoneNumber;
+            student.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return (true, "Profile updated successfully");
+        }
+
+
+
+
+
     }
 }

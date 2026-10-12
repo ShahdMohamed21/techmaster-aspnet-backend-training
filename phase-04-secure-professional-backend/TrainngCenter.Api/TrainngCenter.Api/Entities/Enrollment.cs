@@ -23,7 +23,6 @@
 
         public DateTime? DeletedAt { get; set; }
 
-        // Navigation Properties
 
         public Student Student { get; set; } = null!;
 

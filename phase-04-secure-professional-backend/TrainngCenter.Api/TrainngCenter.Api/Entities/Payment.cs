@@ -18,7 +18,7 @@
 
         public string? Notes { get; set; }
 
-        // Navigation Property
+        
 
         public Enrollment Enrollment { get; set; } = null!;
     }
