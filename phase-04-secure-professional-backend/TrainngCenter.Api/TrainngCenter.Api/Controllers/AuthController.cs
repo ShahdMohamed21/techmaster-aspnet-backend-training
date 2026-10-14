@@ -25,7 +25,7 @@ namespace TrainingCenter.Api.Controllers
 
             if (!result.Success)
             {
-                if (result.Message == "Email is already registered")
+                if (result.Message == "Email is already registered.")
                 {
                     return Conflict(new
                     {
